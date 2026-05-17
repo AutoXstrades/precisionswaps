@@ -7,8 +7,8 @@ jspm_packages/
 out/
 
 # production builds
-build/
-dist/
+/build/
+/dist/
 
 # environment
 .env

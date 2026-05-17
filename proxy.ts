@@ -3,7 +3,13 @@ import { auth } from "@/auth";
 import { safeRedirect } from "@/lib/safe-redirect";
 
 const customerRoutes = ["/dashboard", "/builds"];
-const adminRoutes = ["/admin/dashboard", "/admin/builds", "/admin/agents", "/admin/logs"];
+const adminRoutes = [
+  "/admin/dashboard",
+  "/admin/builds",
+  "/admin/users",
+  "/admin/agents",
+  "/admin/logs",
+];
 
 export default auth((request) => {
   const { nextUrl } = request;

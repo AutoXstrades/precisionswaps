@@ -20,6 +20,8 @@ export async function SiteNav() {
   return (
     <nav className="flex flex-wrap items-center gap-2 text-sm font-semibold text-white/70">
       <NavLink href="/" label="Home" />
+      <NavLink href="/pricing" label="Pricing" />
+      <NavLink href="/contact" label="Contact" />
       {session?.user ? (
         <>
           {role === "CUSTOMER" ? <NavLink href="/dashboard" label="Dashboard" /> : null}
