@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum BuildGoal {
+  DAILY
+  STREET
+  DRAG
+  SHOW
+}
+
+enum AgentLogRole {
+  system
+  user
+  assistant
+}
+
+enum AgentType {
+  LS_SPECIALIST
+  CLAWBOT_SUPERVISOR
+  CLAWBOT_WORKER
+}
+
+model User {
+  id           String     @id @default(cuid())
+  email        String     @unique
+  passwordHash String
+  role         UserRole   @default(CUSTOMER)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  builds       Build[]
+  agentLogs    AgentLog[]
+}
+
+model Build {
+  id           String     @id @default(cuid())
+  userId       String
+  vehicleYear  Int
+  vehicleMake  String
+  vehicleModel String
+  engineStatus String
+  goal         BuildGoal
+  notes        String?
+  aiSummary    String?
+  estimateMin  Int?
+  estimateMax  Int?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agentLogs    AgentLog[]
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model AgentLog {
+  id        String       @id @default(cuid())
+  userId    String?
+  buildId   String?
+  role      AgentLogRole
+  content   String
+  createdAt DateTime     @default(now())
+  user      User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  build     Build?       @relation(fields: [buildId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([buildId])
+  @@index([createdAt])
+}
+
+model AgentConfig {
+  id         String    @id @default(cuid())
+  name       String
+  type       AgentType
+  configJson Json
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([type])
+}
