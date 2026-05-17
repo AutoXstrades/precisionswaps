@@ -86,20 +86,25 @@ Expected core flows after database setup:
 - Customer can sign up, log in, create a guided build ticket, and view saved builds.
 - Admin can log in, view all builds, inspect agent logs, view agent configs, and run the Clawbot Supervisor report.
 
-## Launch Checklist
+## Phase 7 Go Live Checklist
 
 Before the first production test:
 
 1. Set `DATABASE_URL` to the production PostgreSQL connection string.
 2. Set `NEXTAUTH_SECRET`, `NEXTAUTH_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, and optional `OPENAI_API_KEY`.
-3. Run `npm run prisma:deploy`.
-4. Run `npm run prisma:db-seed`.
-5. Run `npm run verify:db`.
-6. Run `npm run build`.
-7. Start production mode with `npm run start`.
-8. Run `npm run verify:auth` against the production URL or staging URL.
-9. Dry-run the customer path: signup, login, create build, edit build, confirm dashboard.
-10. Dry-run the admin path: login, filter builds, edit build, edit agent config, run Clawbot report.
+3. In Vercel, set the build command to `npm run build`.
+4. In Vercel or a Node host, set the start command to `npm start`.
+5. Run `npm run prisma:deploy`.
+6. Run `npm run prisma:db-seed`.
+7. Run `npm run verify:db`.
+8. Run `npm run build`.
+9. Start production mode with `npm run start`.
+10. Run `npm run verify:auth` against the production URL or staging URL.
+11. Dry-run the customer path: signup, login, create build, edit build, confirm dashboard, logout.
+12. Dry-run the admin path: login, filter builds, edit build, edit agent config, run Clawbot report.
+13. Confirm unauthenticated users redirect to login/admin login.
+14. Confirm customers cannot access admin routes.
+15. Confirm admins cannot access customer-only build editing routes.
 
 ## Boundaries
 
