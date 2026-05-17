@@ -1,6 +1,7 @@
 name: Prisma Migrate and Seed
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
