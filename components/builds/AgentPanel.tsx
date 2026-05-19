@@ -25,6 +25,11 @@ type SpecialistResult = {
   buildId?: string;
 };
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
 const engineOptions = [
   "I have engine and transmission",
   "I have the engine only",
@@ -70,6 +75,16 @@ export function AgentPanel() {
   const [result, setResult] = useState<SpecialistResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [chatInput, setChatInput] = useState("");
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
+    {
+      role: "assistant",
+      content:
+        "Ask me about LS vs LT, wiring, cost range, daily reliability, cam choices, or what parts you need before the build ticket.",
+    },
+  ]);
+  const [chatError, setChatError] = useState<string | null>(null);
+  const [isChatLoading, setIsChatLoading] = useState(false);
 
   const speech =
     result?.nextQuestion ??
@@ -148,6 +163,50 @@ export function AgentPanel() {
     }
 
     setStep(4);
+  }
+
+  async function sendChatMessage(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    const message = chatInput.trim();
+
+    if (!message) {
+      setChatError("Type a question for the specialist.");
+      return;
+    }
+
+    setIsChatLoading(true);
+    setChatError(null);
+    setChatInput("");
+    setChatMessages((current) => [...current, { role: "user", content: message }]);
+
+    const response = await fetch("/api/agent/ls-specialist", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ message }),
+    });
+
+    const data = (await response.json().catch(() => null)) as
+      | { reply?: string; error?: string; issues?: Array<{ message?: string }> }
+      | null;
+
+    setIsChatLoading(false);
+
+    if (!response.ok || !data?.reply) {
+      setChatError(
+        data?.error ??
+          data?.issues?.[0]?.message ??
+          "The specialist could not answer right now.",
+      );
+      return;
+    }
+
+    setChatMessages((current) => [
+      ...current,
+      { role: "assistant", content: data.reply as string },
+    ]);
   }
 
   return (
@@ -383,6 +442,61 @@ export function AgentPanel() {
             </div>
           </div>
         ) : null}
+
+        <div className="mt-8 border-t border-white/10 pt-6">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.22em] text-[#FF003C]">
+                Live specialist
+              </p>
+              <h3 className="mt-2 text-xl font-black text-white">Ask a build question</h3>
+            </div>
+            {isChatLoading ? (
+              <span className="text-xs font-black uppercase tracking-[0.16em] text-white/45">
+                Thinking...
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-4 max-h-72 space-y-3 overflow-y-auto rounded-[8px] border border-white/10 bg-black/35 p-4">
+            {chatMessages.map((message, index) => (
+              <div
+                key={`${message.role}-${index}`}
+                className={`rounded-[8px] border p-3 text-sm leading-6 ${
+                  message.role === "assistant"
+                    ? "border-[#FF003C]/25 bg-[#FF003C]/[0.08] text-white/76"
+                    : "ml-auto border-white/10 bg-white/[0.08] text-white"
+                }`}
+              >
+                {message.content}
+              </div>
+            ))}
+          </div>
+
+          {chatError ? (
+            <p className="mt-3 text-sm font-semibold text-[#FF003C]">{chatError}</p>
+          ) : null}
+
+          <form className="mt-4 flex flex-col gap-3 sm:flex-row" onSubmit={sendChatMessage}>
+            <input
+              value={chatInput}
+              onChange={(event) => {
+                setChatInput(event.target.value);
+                setChatError(null);
+              }}
+              disabled={isChatLoading}
+              className="min-w-0 flex-1 rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition placeholder:text-white/30 focus:border-[#FF003C]"
+              placeholder="Ask about cost, LS vs LT, wiring, cam, boost..."
+            />
+            <button
+              type="submit"
+              disabled={isChatLoading}
+              className="rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isChatLoading ? "Sending..." : "Ask"}
+            </button>
+          </form>
+        </div>
       </section>
     </div>
   );

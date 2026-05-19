@@ -13,6 +13,7 @@
     "prisma:seed": "tsx prisma/seed.ts",
     "prisma:db-seed": "prisma db seed",
     "verify:auth": "node scripts/verify-auth-routing.mjs",
+    "verify:agent-chat": "node scripts/verify-agent-chat.mjs",
     "verify:db": "node scripts/verify-db.mjs"
   },
   "dependencies": {

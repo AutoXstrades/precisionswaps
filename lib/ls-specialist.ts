@@ -13,6 +13,16 @@ export const buildIntakeSchema = z.object({
 
 export type BuildIntake = z.infer<typeof buildIntakeSchema>;
 
+export const specialistChatSchema = z.object({
+  message: z
+    .string()
+    .trim()
+    .min(1, "Message is required.")
+    .max(1000, "Message is too long."),
+});
+
+export type SpecialistChatInput = z.infer<typeof specialistChatSchema>;
+
 export type SpecialistResult = {
   nextQuestion: string;
   explanation: string;
@@ -90,6 +100,98 @@ export function getFallbackSpecialistResult(intake: BuildIntake): SpecialistResu
   };
 }
 
+export function getFallbackSpecialistReply(input: SpecialistChatInput) {
+  const message = input.message.toLowerCase();
+
+  if (message.includes("lt")) {
+    return {
+      reply:
+        "LT swaps can make excellent power, but they usually add controller, fuel system, wiring, and parts-cost complexity compared with a straightforward LS swap. For most daily and street builds, I would price both paths before choosing.",
+    };
+  }
+
+  if (
+    message.includes("cost") ||
+    message.includes("price") ||
+    message.includes("estimate")
+  ) {
+    return {
+      reply:
+        "A typical PrecisionSwaps complete build target is $7,500-$10,000 for straightforward LS work, with cammed, LT, forced-induction, sourcing, wiring repair, and cleanup work pushing the range higher.",
+    };
+  }
+
+  if (message.includes("daily") || message.includes("reliable")) {
+    return {
+      reply:
+        "For a reliable daily, I would keep the combo simple: proven LS platform, conservative cam if any, clean cooling, solid fuel delivery, sorted wiring, and enough converter/transmission planning to avoid drivability problems.",
+    };
+  }
+
+  return {
+    reply:
+      "I can help plan LS and LT swap paths, parts sourcing, wiring, goals, estimates, and build-ticket details. Tell me the vehicle, what drivetrain you have, and whether the goal is daily, street, drag, or show.",
+  };
+}
+
+export async function askOpenAiForSpecialistReply(
+  input: SpecialistChatInput,
+): Promise<{ reply: string }> {
+  if (!process.env.OPENAI_API_KEY) {
+    return getFallbackSpecialistReply(input);
+  }
+
+  const fallback = getFallbackSpecialistReply(input);
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with one key: reply. Keep replies concise, practical, shop-ready, and focused on LS/LT swaps, wiring, estimates, build planning, and customer intake.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              message: input.message,
+              requiredShape: { reply: "string" },
+            }),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      return fallback;
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = data.choices?.[0]?.message?.content;
+
+    if (!content) {
+      return fallback;
+    }
+
+    const parsed = JSON.parse(content) as Partial<{ reply: string }>;
+    const reply = parsed.reply?.trim();
+
+    return reply ? { reply } : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export async function askOpenAiForSpecialistResult(
   intake: BuildIntake,
 ): Promise<SpecialistResult> {
@@ -98,52 +200,53 @@ export async function askOpenAiForSpecialistResult(
   }
 
   const fallback = getFallbackSpecialistResult(intake);
-  const response = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-    },
-    body: JSON.stringify({
-      model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content:
-            "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with nextQuestion, explanation, summary, estimateMin, estimateMax. Be practical, concise, and shop-ready. Estimates are whole USD numbers.",
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            intake,
-            requiredShape: {
-              nextQuestion: "string",
-              explanation: "string",
-              summary: "string",
-              estimateMin: "number",
-              estimateMax: "number",
-            },
-          }),
-        },
-      ],
-    }),
-  });
-
-  if (!response.ok) {
-    return fallback;
-  }
-
-  const data = (await response.json()) as {
-    choices?: Array<{ message?: { content?: string } }>;
-  };
-  const content = data.choices?.[0]?.message?.content;
-
-  if (!content) {
-    return fallback;
-  }
 
   try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL ?? "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content:
+              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with nextQuestion, explanation, summary, estimateMin, estimateMax. Be practical, concise, and shop-ready. Estimates are whole USD numbers.",
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              intake,
+              requiredShape: {
+                nextQuestion: "string",
+                explanation: "string",
+                summary: "string",
+                estimateMin: "number",
+                estimateMax: "number",
+              },
+            }),
+          },
+        ],
+      }),
+    });
+
+    if (!response.ok) {
+      return fallback;
+    }
+
+    const data = (await response.json()) as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = data.choices?.[0]?.message?.content;
+
+    if (!content) {
+      return fallback;
+    }
+
     const parsed = JSON.parse(content) as Partial<SpecialistResult>;
 
     return {

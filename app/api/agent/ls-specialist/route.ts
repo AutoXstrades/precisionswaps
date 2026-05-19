@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { withApiHandler, validationError } from "@/lib/api-handler";
 import {
+  askOpenAiForSpecialistReply,
   askOpenAiForSpecialistResult,
   buildIntakeSchema,
+  specialistChatSchema,
 } from "@/lib/ls-specialist";
+import { log } from "@/lib/log";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, rateLimitConfigs } from "@/lib/rate-limit";
 
@@ -27,14 +30,48 @@ export const POST = withApiHandler(async (request: Request) => {
   }
 
   const body = await request.json().catch(() => null);
+
+  if (body && typeof body === "object" && "message" in body) {
+    log.info("Agent chat request received");
+    const parsedChat = specialistChatSchema.safeParse(body);
+
+    if (!parsedChat.success) {
+      log.info("Agent chat validation failed");
+      return validationError(parsedChat.error);
+    }
+
+    const result = await askOpenAiForSpecialistReply(parsedChat.data);
+
+    await prisma.agentLog.createMany({
+      data: [
+        {
+          userId: session.user.id,
+          role: "user",
+          content: JSON.stringify({ type: "specialist_chat" }),
+        },
+        {
+          userId: session.user.id,
+          role: "assistant",
+          content: JSON.stringify({ type: "specialist_chat_reply" }),
+        },
+      ],
+    });
+
+    log.info("Agent chat call succeeded");
+    return NextResponse.json(result);
+  }
+
+  log.info("Agent intake request received");
   const parsedBody = buildIntakeSchema.safeParse(body);
 
   if (!parsedBody.success) {
+    log.info("Agent intake validation failed");
     return validationError(parsedBody.error);
   }
 
   const intake = parsedBody.data;
   const result = await askOpenAiForSpecialistResult(intake);
+  log.info("Agent intake call succeeded");
 
   if (!intake.saveBuild) {
     await prisma.agentLog.createMany({
@@ -62,12 +99,14 @@ export const POST = withApiHandler(async (request: Request) => {
     !intake.engineStatus ||
     !intake.goal
   ) {
+    log.info("Agent build save rejected because required fields are incomplete");
     return NextResponse.json(
       { error: "Vehicle, engine status, and build goal are required before saving." },
       { status: 400 },
     );
   }
 
+  log.info("Agent build save starting");
   const build = await prisma.build.create({
     data: {
       userId: session.user.id,
@@ -114,5 +153,6 @@ export const POST = withApiHandler(async (request: Request) => {
     ],
   });
 
+  log.info("Agent build save completed");
   return NextResponse.json({ ...result, buildId: build.id });
 });
