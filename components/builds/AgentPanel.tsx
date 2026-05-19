@@ -210,18 +210,18 @@ export function AgentPanel() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[340px_1fr]">
-      <aside className="neon-panel relative min-h-[620px] overflow-hidden rounded-[8px] p-5">
+    <div className="grid gap-5 lg:grid-cols-[minmax(0,21.25rem)_minmax(0,1fr)] lg:gap-6">
+      <aside className="neon-panel relative min-w-0 overflow-hidden rounded-[8px] p-4 sm:p-5">
         <div className="absolute inset-0 bg-[linear-gradient(150deg,rgba(255,0,60,0.18),transparent_50%,rgba(0,210,255,0.14))]" />
-        <div className="relative flex min-h-[580px] flex-col justify-between">
+          <div className="relative flex min-h-[30rem] min-w-0 flex-col justify-between gap-6 sm:min-h-[36rem]">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.22em] text-white/50">
+            <p className="text-xs font-black uppercase tracking-[0.16em] text-white/50 sm:tracking-[0.22em]">
               LS Swap Specialist
             </p>
-            <h2 className="mt-3 text-2xl font-black text-white">Agent intake</h2>
+            <h2 className="mt-3 break-words text-2xl font-black text-white">Agent intake</h2>
           </div>
 
-          <div className="relative mx-auto h-[340px] w-[230px] overflow-hidden rounded-[8px] border border-[#FF003C]/45 bg-black/45 shadow-[0_0_54px_rgba(255,0,60,0.22)]">
+          <div className="relative mx-auto aspect-[23/34] h-auto w-[min(66vw,14.375rem)] overflow-hidden rounded-[8px] border border-[#FF003C]/45 bg-black/45 shadow-[0_0_54px_rgba(255,0,60,0.22)]">
             <Image
               src="/images/ai-agent-avatar.jpeg"
               alt="AI LS Swap Specialist"
@@ -231,8 +231,8 @@ export function AgentPanel() {
             />
           </div>
 
-          <div className="rounded-[8px] border border-white/10 bg-black/70 p-4">
-            <p className="text-sm font-semibold leading-6 text-white/78">{speech}</p>
+            <div className="min-w-0 rounded-[8px] border border-white/10 bg-black/70 p-4">
+              <p className="break-words text-sm font-semibold leading-6 text-white/78">{speech}</p>
             {result?.explanation ? (
               <p className="mt-3 text-sm leading-6 text-white/52">{result.explanation}</p>
             ) : null}
@@ -240,12 +240,12 @@ export function AgentPanel() {
         </div>
       </aside>
 
-      <section className="neon-panel rounded-[8px] p-6">
-        <div className="mb-6 flex flex-wrap gap-2">
+      <section className="neon-panel min-w-0 rounded-[8px] p-4 sm:p-6">
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible sm:pb-0">
           {["Vehicle", "Drivetrain", "Goal", "Preferences", "Ticket"].map((label, index) => (
             <span
               key={label}
-              className={`rounded-full border px-3 py-2 text-xs font-black uppercase tracking-[0.14em] ${
+              className={`shrink-0 rounded-full border px-3 py-2 text-xs font-black uppercase tracking-[0.1em] sm:tracking-[0.14em] ${
                 index === step
                   ? "border-[#FF003C] text-white"
                   : index < step
@@ -295,7 +295,7 @@ export function AgentPanel() {
               />
             </label>
             <div className="sm:col-span-3">
-              <button className="rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white">
+              <button className="min-h-11 w-full rounded-full bg-[#FF003C] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white sm:w-auto sm:text-sm sm:tracking-[0.16em]">
                 Continue
               </button>
             </div>
@@ -306,14 +306,14 @@ export function AgentPanel() {
           <div>
             <div className="grid gap-3 sm:grid-cols-2">
               {engineOptions.map((option) => (
-                <button
+              <button
                   key={option}
                   type="button"
                   onClick={() => {
                     updateIntake({ engineStatus: option });
                     setStep(2);
                   }}
-                  className="rounded-[8px] border border-white/10 bg-black/45 p-4 text-left font-bold text-white/78 transition hover:border-[#FF003C]/70 hover:text-white"
+                  className="min-h-11 rounded-[8px] border border-white/10 bg-black/45 p-4 text-left font-bold text-white/78 transition hover:border-[#FF003C]/70 hover:text-white"
                 >
                   {option}
                 </button>
@@ -340,7 +340,7 @@ export function AgentPanel() {
                     updateIntake({ goal: option.value });
                     setStep(3);
                   }}
-                  className="rounded-[8px] border border-white/10 bg-black/45 p-4 text-center font-black uppercase tracking-[0.14em] text-white/78 transition hover:border-[#FF003C]/70 hover:text-white"
+                  className="min-h-11 rounded-[8px] border border-white/10 bg-black/45 p-4 text-center font-black uppercase tracking-[0.12em] text-white/78 transition hover:border-[#FF003C]/70 hover:text-white sm:tracking-[0.14em]"
                 >
                   {option.label}
                 </button>
@@ -367,7 +367,7 @@ export function AgentPanel() {
                     key={option}
                     type="button"
                     onClick={() => togglePreference(option)}
-                    className={`rounded-[8px] border p-4 text-left font-bold transition ${
+                  className={`min-h-11 rounded-[8px] border p-4 text-left font-bold transition ${
                       isSelected
                         ? "border-[#FF003C] bg-[#FF003C]/12 text-white"
                         : "border-white/10 bg-black/45 text-white/70 hover:border-[#FF003C]/70 hover:text-white"
@@ -392,14 +392,14 @@ export function AgentPanel() {
                 type="button"
                 onClick={() => generateTicket(false)}
                 disabled={isLoading}
-                className="rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-11 rounded-full bg-[#FF003C] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm sm:tracking-[0.16em]"
               >
                 {isLoading ? "Generating..." : "Generate Build Ticket"}
               </button>
               <button
                 type="button"
                 onClick={() => setStep(2)}
-                className="rounded-full border border-white/15 px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white/70 hover:border-[#FF003C]/70 hover:text-white"
+                className="min-h-11 rounded-full border border-white/15 px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white/70 hover:border-[#FF003C]/70 hover:text-white sm:text-sm sm:tracking-[0.16em]"
               >
                 Back
               </button>
@@ -413,13 +413,13 @@ export function AgentPanel() {
               <p className="text-sm font-black uppercase tracking-[0.22em] text-[#FF003C]">
                 Draft build ticket
               </p>
-              <h3 className="mt-3 text-2xl font-black text-white">
+              <h3 className="mt-3 break-words text-2xl font-black text-white">
                 {intake.vehicleYear} {intake.vehicleMake} {intake.vehicleModel}
               </h3>
               <p className="mt-3 text-lg font-black text-[#FF003C]">
                 {formatEstimate(result?.estimateMin, result?.estimateMax)}
               </p>
-              <pre className="mt-5 whitespace-pre-wrap font-sans text-sm leading-7 text-white/72">
+              <pre className="mt-5 max-w-full whitespace-pre-wrap break-words font-sans text-sm leading-7 text-white/72">
                 {result?.summary}
               </pre>
             </div>
@@ -428,14 +428,14 @@ export function AgentPanel() {
                 type="button"
                 onClick={() => generateTicket(true)}
                 disabled={isLoading}
-                className="rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+                className="min-h-11 rounded-full bg-[#FF003C] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm sm:tracking-[0.16em]"
               >
                 {isLoading ? "Saving..." : "Save Build Ticket"}
               </button>
               <button
                 type="button"
                 onClick={() => setStep(3)}
-                className="rounded-full border border-white/15 px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white/70 hover:border-[#FF003C]/70 hover:text-white"
+                className="min-h-11 rounded-full border border-white/15 px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white/70 hover:border-[#FF003C]/70 hover:text-white sm:text-sm sm:tracking-[0.16em]"
               >
                 Edit Preferences
               </button>
@@ -458,11 +458,11 @@ export function AgentPanel() {
             ) : null}
           </div>
 
-          <div className="mt-4 max-h-72 space-y-3 overflow-y-auto rounded-[8px] border border-white/10 bg-black/35 p-4">
+          <div className="mt-4 max-h-72 space-y-3 overflow-y-auto overscroll-contain rounded-[8px] border border-white/10 bg-black/35 p-3 sm:p-4">
             {chatMessages.map((message, index) => (
               <div
                 key={`${message.role}-${index}`}
-                className={`rounded-[8px] border p-3 text-sm leading-6 ${
+                className={`max-w-full rounded-[8px] border p-3 text-sm leading-6 break-words sm:max-w-[88%] ${
                   message.role === "assistant"
                     ? "border-[#FF003C]/25 bg-[#FF003C]/[0.08] text-white/76"
                     : "ml-auto border-white/10 bg-white/[0.08] text-white"
@@ -485,13 +485,13 @@ export function AgentPanel() {
                 setChatError(null);
               }}
               disabled={isChatLoading}
-              className="min-w-0 flex-1 rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition placeholder:text-white/30 focus:border-[#FF003C]"
+              className="min-h-11 min-w-0 flex-1 rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition placeholder:text-white/30 focus:border-[#FF003C]"
               placeholder="Ask about cost, LS vs LT, wiring, cam, boost..."
             />
             <button
               type="submit"
               disabled={isChatLoading}
-              className="rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+              className="min-h-11 rounded-full bg-[#FF003C] px-5 py-3 text-xs font-black uppercase tracking-[0.08em] text-white disabled:cursor-not-allowed disabled:opacity-60 sm:text-sm sm:tracking-[0.16em]"
             >
               {isChatLoading ? "Sending..." : "Ask"}
             </button>

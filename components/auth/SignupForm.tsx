@@ -64,7 +64,7 @@ export function SignupForm() {
           name="email"
           type="email"
           required
-          className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+          className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           placeholder="you@example.com"
         />
       </label>
@@ -75,7 +75,7 @@ export function SignupForm() {
           type="password"
           required
           minLength={8}
-          className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+          className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           placeholder="Choose a strong password"
         />
       </label>
@@ -83,7 +83,7 @@ export function SignupForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+        className="min-h-11 w-full rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-white disabled:cursor-not-allowed disabled:opacity-60 sm:tracking-[0.16em]"
       >
         {isSubmitting ? "Creating..." : "Create Account"}
       </button>

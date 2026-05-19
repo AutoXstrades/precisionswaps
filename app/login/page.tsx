@@ -14,7 +14,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const safeCallbackUrl = safeRedirect(callbackUrl, "/dashboard");
 
   return (
-    <section className="grid min-h-[68vh] items-center gap-8 lg:grid-cols-[1fr_440px]">
+    <section className="grid min-h-[68vh] items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,27.5rem)]">
       <div className="relative hidden min-h-[560px] overflow-hidden rounded-[8px] border border-white/10 bg-black lg:block">
         <Image
           src="/images/business-flyer-theme.png"
@@ -26,11 +26,11 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-black/35 to-black/88" />
       </div>
 
-      <div className="neon-panel rounded-[8px] p-6">
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-[#FF003C]">
+      <div className="neon-panel rounded-[8px] p-4 sm:p-6">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:text-sm sm:tracking-[0.22em]">
           Customer login
         </p>
-        <h1 className="mt-3 text-3xl font-black text-white">Welcome back</h1>
+        <h1 className="mt-3 text-2xl font-black text-white sm:text-3xl">Welcome back</h1>
         <LoginForm callbackUrl={safeCallbackUrl} />
         <p className="mt-5 text-sm text-white/58">
           Need an account?{" "}

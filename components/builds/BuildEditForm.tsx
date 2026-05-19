@@ -71,7 +71,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
   }
 
   return (
-    <form className="neon-panel rounded-[8px] p-6" onSubmit={handleSubmit}>
+    <form className="neon-panel rounded-[8px] p-4 sm:p-6" onSubmit={handleSubmit}>
       {error ? (
         <div className="mb-5 rounded-[8px] border border-[#FF003C]/50 bg-[#FF003C]/10 p-3 text-sm font-semibold text-white">
           {error}
@@ -88,7 +88,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
             max="2100"
             required
             defaultValue={build.vehicleYear}
-            className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+            className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           />
         </label>
         <label className="block">
@@ -97,7 +97,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
             name="vehicle_make"
             required
             defaultValue={build.vehicleMake}
-            className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+            className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           />
         </label>
         <label className="block">
@@ -106,7 +106,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
             name="vehicle_model"
             required
             defaultValue={build.vehicleModel}
-            className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+            className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           />
         </label>
       </div>
@@ -118,7 +118,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
             name="engine_status"
             required
             defaultValue={build.engineStatus}
-            className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+            className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           />
         </label>
         <label className="block">
@@ -127,7 +127,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
             name="goal"
             required
             defaultValue={build.goal}
-            className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+            className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           >
             {goalOptions.map((goal) => (
               <option key={goal.value} value={goal.value}>
@@ -146,7 +146,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
             type="number"
             min="0"
             defaultValue={build.estimateMin ?? ""}
-            className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+            className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           />
         </label>
         <label className="block">
@@ -156,7 +156,7 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
             type="number"
             min="0"
             defaultValue={build.estimateMax ?? ""}
-            className="mt-2 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
+            className="mt-2 min-h-11 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
           />
         </label>
       </div>
@@ -174,13 +174,13 @@ export function BuildEditForm({ build }: BuildEditFormProps) {
         <button
           type="submit"
           disabled={isSaving}
-          className="rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white disabled:cursor-not-allowed disabled:opacity-60"
+          className="min-h-11 w-full rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-white disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto sm:tracking-[0.16em]"
         >
           {isSaving ? "Saving..." : "Save Build"}
         </button>
         <Link
           href={`/builds/${build.id}`}
-          className="rounded-full border border-white/15 px-5 py-3 text-center text-sm font-black uppercase tracking-[0.16em] text-white/70 hover:border-[#FF003C]/70 hover:text-white"
+          className="flex min-h-11 w-full items-center justify-center rounded-full border border-white/15 px-5 py-3 text-center text-sm font-black uppercase tracking-[0.12em] text-white/70 hover:border-[#FF003C]/70 hover:text-white sm:w-auto sm:tracking-[0.16em]"
         >
           Cancel
         </Link>

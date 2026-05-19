@@ -40,10 +40,10 @@ export default async function DashboardPage() {
     <section>
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-[#FF003C]">
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:text-sm sm:tracking-[0.22em]">
             Customer dashboard
           </p>
-          <h1 className="mt-3 text-4xl font-black text-white">Your builds</h1>
+          <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">Your builds</h1>
           <p className="mt-3 max-w-2xl text-white/60">
             Pick up an existing ticket or start a fresh LS swap intake with the
             specialist agent.
@@ -51,7 +51,7 @@ export default async function DashboardPage() {
         </div>
         <Link
           href="/builds/new"
-          className="rounded-full bg-[#FF003C] px-5 py-3 text-center text-sm font-black uppercase tracking-[0.16em] text-white"
+          className="flex min-h-11 w-full items-center justify-center rounded-full bg-[#FF003C] px-5 py-3 text-center text-sm font-black uppercase tracking-[0.12em] text-white sm:w-auto sm:tracking-[0.16em]"
         >
           Start New Build
         </Link>
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
             >
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <p className="text-xl font-black text-white">
+                  <p className="break-words text-xl font-black text-white">
                     {build.vehicleYear} {build.vehicleMake} {build.vehicleModel}
                   </p>
                   <p className="mt-2 text-sm font-semibold uppercase tracking-[0.18em] text-white/50">
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
           </p>
           <Link
             href="/builds/new"
-            className="mt-6 inline-flex rounded-full border border-[#FF003C]/70 px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white"
+            className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full border border-[#FF003C]/70 px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-white sm:w-auto sm:tracking-[0.16em]"
           >
             Start New Build
           </Link>

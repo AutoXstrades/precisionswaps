@@ -1,39 +1,26 @@
-import Link from "next/link";
 import { auth } from "@/auth";
-import { LogoutButton } from "@/components/layout/LogoutButton";
-
-function NavLink({ href, label }: { href: string; label: string }) {
-  return (
-    <Link
-      href={href}
-      className="rounded-full border border-white/10 px-3 py-2 transition hover:border-[#FF003C]/70 hover:text-white"
-    >
-      {label}
-    </Link>
-  );
-}
+import { ClientSiteNav } from "@/components/layout/ClientSiteNav";
 
 export async function SiteNav() {
   const session = await auth();
   const role = session?.user?.role;
+  const links = [
+    { href: "/", label: "Home" },
+    { href: "/pricing", label: "Pricing" },
+    { href: "/contact", label: "Contact" },
+  ];
 
-  return (
-    <nav className="flex flex-wrap items-center gap-2 text-sm font-semibold text-white/70">
-      <NavLink href="/" label="Home" />
-      <NavLink href="/pricing" label="Pricing" />
-      <NavLink href="/contact" label="Contact" />
-      {session?.user ? (
-        <>
-          {role === "CUSTOMER" ? <NavLink href="/dashboard" label="Dashboard" /> : null}
-          {role === "ADMIN" ? <NavLink href="/admin/dashboard" label="Admin" /> : null}
-          <LogoutButton />
-        </>
-      ) : (
-        <>
-          <NavLink href="/login" label="Login" />
-          <NavLink href="/signup" label="Sign Up" />
-        </>
-      )}
-    </nav>
-  );
+  if (session?.user && role === "CUSTOMER") {
+    links.push({ href: "/dashboard", label: "Dashboard" });
+  }
+
+  if (session?.user && role === "ADMIN") {
+    links.push({ href: "/admin/dashboard", label: "Admin" });
+  }
+
+  if (!session?.user) {
+    links.push({ href: "/login", label: "Login" }, { href: "/signup", label: "Sign Up" });
+  }
+
+  return <ClientSiteNav links={links} showLogout={Boolean(session?.user)} />;
 }

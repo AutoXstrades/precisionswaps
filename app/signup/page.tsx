@@ -4,12 +4,12 @@ import { SignupForm } from "@/components/auth/SignupForm";
 
 export default function SignupPage() {
   return (
-    <section className="grid min-h-[68vh] items-center gap-8 lg:grid-cols-[440px_1fr]">
-      <div className="neon-panel rounded-[8px] p-6">
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-[#FF003C]">
+    <section className="grid min-h-[68vh] items-center gap-8 lg:grid-cols-[minmax(0,27.5rem)_minmax(0,1fr)]">
+      <div className="neon-panel rounded-[8px] p-4 sm:p-6">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:text-sm sm:tracking-[0.22em]">
           Create account
         </p>
-        <h1 className="mt-3 text-3xl font-black text-white">
+        <h1 className="mt-3 text-2xl font-black text-white sm:text-3xl">
           Start your build
         </h1>
         <SignupForm />

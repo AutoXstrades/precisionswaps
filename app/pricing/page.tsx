@@ -9,10 +9,10 @@ export default function PricingPage() {
   return (
     <section className="space-y-8">
       <div>
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-[#FF003C]">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:text-sm sm:tracking-[0.22em]">
           Pricing overview
         </p>
-        <h1 className="mt-3 text-4xl font-black text-white">
+        <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
           Swap pricing and build range
         </h1>
         <p className="mt-4 max-w-3xl leading-7 text-white/68">
@@ -43,7 +43,7 @@ export default function PricingPage() {
                 key={service.label}
                 className="flex items-center justify-between gap-4 border-b border-white/10 pb-3"
               >
-                <span className="font-bold text-white/75">{service.label}</span>
+                <span className="min-w-0 break-words font-bold text-white/75">{service.label}</span>
                 <span className="font-black text-[#FF003C]">{service.price}</span>
               </div>
             ))}
@@ -63,17 +63,17 @@ export default function PricingPage() {
       </div>
 
       <div className="neon-panel rounded-[8px] p-6">
-        <p className="text-sm font-black uppercase tracking-[0.22em] text-[#FF003C]">
+        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:text-sm sm:tracking-[0.22em]">
           Typical total build range
         </p>
-        <p className="mt-3 text-4xl font-black text-white">$7,500-$10,000</p>
+        <p className="mt-3 text-3xl font-black text-white sm:text-4xl">$7,500-$10,000</p>
         <p className="mt-3 max-w-2xl leading-7 text-white/62">
           Target completion window is 30 days once required parts, deposit, and
           vehicle access are ready.
         </p>
         <Link
           href="/build"
-          className="mt-6 inline-flex rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.16em] text-white"
+          className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-[#FF003C] px-5 py-3 text-sm font-black uppercase tracking-[0.12em] text-white sm:w-auto sm:tracking-[0.16em]"
         >
           Start build intake
         </Link>
