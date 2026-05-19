@@ -26,8 +26,15 @@ export function SignupForm() {
     });
 
     if (!response.ok) {
-      const data = (await response.json().catch(() => null)) as { error?: string } | null;
-      setError(data?.error ?? "Could not create account.");
+      const data = (await response.json().catch(() => null)) as {
+        error?: string;
+        issues?: Array<{ message?: string }>;
+      } | null;
+      setError(
+        data?.error ??
+          data?.issues?.[0]?.message ??
+          "Something went wrong. Please try again.",
+      );
       setIsSubmitting(false);
       return;
     }
