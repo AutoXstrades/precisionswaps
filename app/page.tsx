@@ -3,52 +3,63 @@ import Link from "next/link";
 
 export default function HomePage() {
   return (
-    <div className="space-y-8 sm:space-y-12">
-      <section className="relative overflow-hidden rounded-[8px] border border-white/10 bg-black">
+    <div>
+      <section className="relative overflow-hidden rounded-[8px] border border-white/10 bg-black shadow-[0_0_60px_rgba(255,0,60,0.14)]">
         <Image
           src="/images/background-engine.jpeg"
           alt="LS engine bay"
           fill
           priority
-          className="object-cover opacity-45"
+          className="object-cover opacity-36"
           sizes="100vw"
         />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(0,0,0,0.94)_0%,rgba(0,0,0,0.78)_46%,rgba(0,0,0,0.42)_100%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_18%,rgba(255,0,60,0.18),transparent_23rem),linear-gradient(90deg,rgba(0,0,0,0.92)_0%,rgba(0,0,0,0.78)_49%,rgba(0,0,0,0.52)_100%)]" />
         <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#050509] to-transparent" />
 
         <div className="relative grid max-w-full min-h-[calc(100svh-8rem)] items-center gap-8 px-4 py-8 sm:px-8 sm:py-10 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,26.25rem)] lg:px-12">
-          <div className="min-w-0 w-full max-w-[calc(100vw_-_4rem)] sm:max-w-3xl">
-            <p className="mb-4 text-[0.68rem] font-black uppercase tracking-[0.1em] text-[#FF003C] sm:text-sm sm:tracking-[0.26em]">
+          <div className="mx-auto flex min-w-0 w-full max-w-[calc(100vw_-_4rem)] flex-col items-center text-center sm:max-w-3xl">
+            <div className="relative aspect-[1005/602] w-full max-w-[28rem] overflow-hidden rounded-[8px] border border-[#FF003C]/30 bg-black/65 shadow-[0_0_46px_rgba(255,0,60,0.26)] sm:max-w-[34rem]">
+              <Image
+                src="/images/precisionswaps-logo.jpeg"
+                alt="PrecisionSwaps.co powered by Last Stop Swaps logo"
+                fill
+                priority
+                className="object-cover"
+                sizes="(max-width: 768px) calc(100vw - 4rem), 34rem"
+              />
+            </div>
+
+            <p className="mt-6 text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#FF003C] neon-text sm:text-sm sm:tracking-[0.28em]">
               LS swap planning, wired tight
             </p>
-            <h1 className="max-w-full break-words text-[clamp(0.98rem,5.2vw,4rem)] font-black leading-[1.08] text-white [overflow-wrap:anywhere] sm:text-6xl lg:text-7xl">
+            <h1 className="mt-3 max-w-full whitespace-nowrap text-[clamp(1.8rem,5.4vw,3.7rem)] font-black leading-[1.02] text-white">
               PrecisionSwaps.co
             </h1>
-            <p className="mt-5 max-w-full text-base leading-7 text-white/78 sm:max-w-2xl sm:text-lg sm:leading-8">
+            <p className="mt-5 max-w-full text-base font-bold leading-7 text-white/82 sm:max-w-2xl sm:text-lg sm:leading-8">
               Build a clean LS swap plan with a specialist agent that captures
               your vehicle, engine status, goals, preferences, and budget range
               before turning it into a shop-ready build ticket.
             </p>
 
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-8 flex w-full max-w-md flex-col justify-center gap-3 sm:flex-row">
               <Link
                 href="/signup"
-                className="flex min-h-11 items-center justify-center rounded-full bg-[#FF003C] px-4 py-3 text-center text-xs font-black uppercase leading-5 tracking-[0.02em] text-white shadow-[0_0_32px_rgba(255,0,60,0.45)] transition hover:bg-[#ff2a59] sm:px-6 sm:text-sm sm:tracking-[0.16em]"
+                className="flex min-h-12 flex-1 items-center justify-center rounded-full bg-[#FF003C] px-5 py-3 text-center text-xs font-black uppercase leading-5 tracking-[0.08em] text-white shadow-[0_0_32px_rgba(255,0,60,0.56)] transition hover:bg-[#ff2a59] sm:text-sm sm:tracking-[0.14em]"
               >
                 Start Your LS Swap
               </Link>
               <Link
                 href="/login"
-                className="flex min-h-11 items-center justify-center rounded-full border border-white/18 px-4 py-3 text-center text-xs font-black uppercase leading-5 tracking-[0.02em] text-white/80 transition hover:border-[#FF003C]/70 hover:text-white sm:px-6 sm:text-sm sm:tracking-[0.16em]"
+                className="flex min-h-12 flex-1 items-center justify-center rounded-full border border-white/22 bg-black/35 px-5 py-3 text-center text-xs font-black uppercase leading-5 tracking-[0.08em] text-white/84 transition hover:border-[#FF003C]/70 hover:text-white sm:text-sm sm:tracking-[0.14em]"
               >
                 Log In
               </Link>
             </div>
 
-            <div className="mt-10 grid max-w-2xl gap-3 sm:grid-cols-3">
+            <div className="mt-9 grid w-full max-w-2xl gap-3 sm:grid-cols-3">
               {["Vehicle intake", "Swap guidance", "Build ticket"].map((item) => (
-                <div key={item} className="border-l-2 border-[#FF003C] bg-black/42 px-4 py-3">
-                  <p className="text-xs font-black uppercase tracking-[0.08em] text-white/82 sm:text-sm sm:tracking-[0.14em]">
+                <div key={item} className="border-t-2 border-[#FF003C] bg-black/46 px-4 py-3">
+                  <p className="text-xs font-black uppercase tracking-[0.08em] text-white/84 sm:text-sm sm:tracking-[0.14em]">
                     {item}
                   </p>
                 </div>
@@ -88,19 +99,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
-
-      <section className="grid gap-5 md:grid-cols-3">
-        {[
-          ["Engine swap labor", "LS, LT, cammed, forced-induction, and harness planning."],
-          ["Parts readiness", "Capture what is on hand and what still needs sourcing."],
-          ["Owner visibility", "Build tickets and AI notes are ready for the back office."],
-        ].map(([title, copy]) => (
-          <div key={title} className="neon-panel rounded-[8px] p-5">
-            <p className="text-lg font-black text-white">{title}</p>
-            <p className="mt-3 text-sm leading-6 text-white/62">{copy}</p>
-          </div>
-        ))}
       </section>
     </div>
   );
