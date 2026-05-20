@@ -32,9 +32,6 @@ export default function HomePage() {
             <p className="mt-6 text-[0.72rem] font-black uppercase tracking-[0.18em] text-[#FF003C] neon-text sm:text-sm sm:tracking-[0.28em]">
               LS swap planning, wired tight
             </p>
-            <h1 className="mt-3 max-w-full whitespace-nowrap text-[clamp(1.8rem,5.4vw,3.7rem)] font-black leading-[1.02] text-white">
-              PrecisionSwaps.co
-            </h1>
             <p className="mt-5 max-w-full text-base font-bold leading-7 text-white/82 sm:max-w-2xl sm:text-lg sm:leading-8">
               Build a clean LS swap plan with a specialist agent that captures
               your vehicle, engine status, goals, preferences, and budget range
