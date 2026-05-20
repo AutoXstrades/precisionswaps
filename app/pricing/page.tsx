@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
   cleanupServices,
@@ -8,28 +9,39 @@ import {
 export default function PricingPage() {
   return (
     <section className="space-y-8">
-      <div>
-        <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:text-sm sm:tracking-[0.22em]">
-          Pricing overview
-        </p>
-        <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
-          Swap pricing and build range
-        </h1>
-        <p className="mt-4 max-w-3xl leading-7 text-white/68">
-          Core labor ranges for LS and LT swap planning. Final totals depend on
-          parts condition, wiring complexity, drivetrain status, sourcing, and
-          vehicle-specific fitment needs.
-        </p>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:items-center">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:text-sm sm:tracking-[0.22em]">
+            Pricing overview
+          </p>
+          <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">
+            Engine swap, performance, and wiring
+          </h1>
+          <p className="mt-4 max-w-3xl leading-7 text-white/68">
+            Full shop price list from PrecisionSwaps.co powered by Last Stop
+            Swaps. Mechanical issues are billed separately and final totals
+            depend on parts readiness, wiring condition, and vehicle-specific
+            fitment needs.
+          </p>
+        </div>
+
+        <div className="relative aspect-[1005/602] overflow-hidden rounded-[8px] border border-[#FF003C]/30 bg-black shadow-[0_0_42px_rgba(255,0,60,0.18)]">
+          <Image
+            src="/images/precisionswaps-logo.jpeg"
+            alt="PrecisionSwaps.co red engine logo"
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+          />
+        </div>
       </div>
 
-      <div className="grid gap-5 md:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {pricingTiers.map((tier) => (
           <article key={tier.label} className="neon-panel rounded-[8px] p-5">
-            <p className="text-sm font-black uppercase tracking-[0.18em] text-white/45">
-              Swap tier
-            </p>
-            <h2 className="mt-3 text-2xl font-black text-white">{tier.label}</h2>
+            <h2 className="text-xl font-black text-white">{tier.label}</h2>
             <p className="mt-4 text-3xl font-black text-[#FF003C]">{tier.price}</p>
+            <p className="mt-3 text-sm leading-6 text-white/58">{tier.note}</p>
           </article>
         ))}
       </div>
@@ -59,6 +71,18 @@ export default function PricingPage() {
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+
+      <div className="neon-panel overflow-hidden rounded-[8px]">
+        <div className="relative aspect-[1024/1536] w-full bg-black sm:aspect-[4/5] lg:aspect-[1024/1536]">
+          <Image
+            src="/images/precisionswaps-pricing.png"
+            alt="Full PrecisionSwaps.co price list"
+            fill
+            className="object-contain"
+            sizes="100vw"
+          />
         </div>
       </div>
 

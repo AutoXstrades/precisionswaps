@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AdminBuildManagementForm } from "@/components/admin/AdminBuildManagementForm";
+import { AdminCustomerLogPanel } from "@/components/admin/AdminCustomerLogPanel";
 import {
   formatAdminDate,
   formatCurrencyRange,
   getBuildForAdmin,
   requireAdmin,
 } from "@/lib/admin";
+import { listCustomerLogsForAdmin } from "@/lib/customer-logs";
 
 type AdminBuildDetailPageProps = {
   params: Promise<{
@@ -24,6 +26,8 @@ export default async function AdminBuildDetailPage({
   if (!build) {
     notFound();
   }
+
+  const customerLogs = await listCustomerLogsForAdmin(build.id);
 
   return (
     <section className="space-y-6">
@@ -81,6 +85,8 @@ export default async function AdminBuildDetailPage({
             initialEstimateMax={build.estimateMax}
             initialInternalNotes={build.adminMeta.internalNotes}
           />
+
+          <AdminCustomerLogPanel buildId={build.id} initialLogs={customerLogs} />
         </div>
 
         <div className="space-y-5">

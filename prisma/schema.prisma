@@ -43,7 +43,7 @@ model User {
 }
 
 model Build {
-  id           String     @id @default(cuid())
+  id           String        @id @default(cuid())
   userId       String
   vehicleYear  Int
   vehicleMake  String
@@ -54,10 +54,11 @@ model Build {
   aiSummary    String?
   estimateMin  Int?
   estimateMax  Int?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   agentLogs    AgentLog[]
+  customerLogs CustomerLog[]
 
   @@index([userId])
   @@index([createdAt])
@@ -87,4 +88,19 @@ model AgentConfig {
   updatedAt  DateTime  @updatedAt
 
   @@index([type])
+}
+
+model CustomerLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  buildId     String   @map("build_id")
+  senderRole  String   @map("sender_role")
+  senderEmail String   @map("sender_email")
+  message     String
+  timestamp   DateTime @default(now()) @db.Timestamptz(6)
+  reviewed    Boolean  @default(false)
+  build       Build    @relation(fields: [buildId], references: [id], onDelete: Cascade)
+
+  @@index([buildId])
+  @@index([timestamp])
+  @@map("customer_logs")
 }

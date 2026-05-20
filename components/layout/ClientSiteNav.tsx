@@ -41,6 +41,14 @@ export function ClientSiteNav({ links, showLogout }: ClientSiteNavProps) {
     setIsOpen(false);
   }, [pathname]);
 
+  useEffect(() => {
+    document.body.style.overflow = isOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <div className="relative sm:static">
       <button
@@ -78,9 +86,18 @@ export function ClientSiteNav({ links, showLogout }: ClientSiteNavProps) {
         {showLogout ? <LogoutButton /> : null}
       </nav>
 
+      <button
+        type="button"
+        aria-label="Close navigation menu"
+        onClick={() => setIsOpen(false)}
+        className={`fixed inset-0 z-[9998] bg-black/55 backdrop-blur-sm transition-opacity duration-200 sm:hidden ${
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+      />
+
       <div
         id="site-mobile-menu"
-        className={`absolute right-0 top-14 z-40 w-[min(82vw,20rem)] origin-top-right rounded-[8px] border border-white/10 bg-[#08080f]/95 p-3 shadow-[0_20px_70px_rgba(0,0,0,0.55)] backdrop-blur transition duration-200 sm:hidden ${
+        className={`absolute right-0 top-14 z-[10000] w-[min(82vw,20rem)] origin-top-right rounded-[8px] border border-white/10 bg-[#08080f]/95 p-3 shadow-[0_20px_70px_rgba(0,0,0,0.55)] backdrop-blur transition duration-200 sm:hidden ${
           isOpen
             ? "translate-y-0 scale-100 opacity-100"
             : "pointer-events-none -translate-y-2 scale-95 opacity-0"
