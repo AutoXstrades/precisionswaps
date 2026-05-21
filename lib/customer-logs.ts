@@ -17,7 +17,7 @@ export function sanitizeCustomerLog(log: {
   senderRole: string;
   senderEmail: string;
   message: string;
-  timestamp: Date;
+  createdAt: Date;
   reviewed: boolean;
 }) {
   return {
@@ -26,7 +26,8 @@ export function sanitizeCustomerLog(log: {
     senderRole: log.senderRole,
     senderEmail: log.senderEmail,
     message: log.message,
-    timestamp: log.timestamp,
+    timestamp: log.createdAt,
+    createdAt: log.createdAt,
     reviewed: log.reviewed,
   };
 }
@@ -34,7 +35,7 @@ export function sanitizeCustomerLog(log: {
 export async function listCustomerLogsForAdmin(buildId: string) {
   const logs = await prisma.customerLog.findMany({
     where: { buildId },
-    orderBy: { timestamp: "asc" },
+    orderBy: { createdAt: "asc" },
   });
 
   return logs.map(sanitizeCustomerLog);

@@ -16,6 +16,8 @@ export async function SiteNav() {
 
   if (session?.user && role === "ADMIN") {
     links.push({ href: "/admin/dashboard", label: "Admin" });
+    links.push({ href: "/admin/parts", label: "Parts" });
+    links.push({ href: "/admin/notifications", label: "Alerts" });
   }
 
   if (!session?.user) {

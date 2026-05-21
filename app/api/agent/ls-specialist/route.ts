@@ -10,6 +10,10 @@ import {
 import { log } from "@/lib/log";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, rateLimitConfigs } from "@/lib/rate-limit";
+import {
+  auditUniversalPartsForNotifications,
+  getUniversalPartsForAgent,
+} from "@/lib/universal-parts";
 
 export const runtime = "nodejs";
 
@@ -70,7 +74,14 @@ export const POST = withApiHandler(async (request: Request) => {
   }
 
   const intake = parsedBody.data;
-  const result = await askOpenAiForSpecialistResult(intake);
+  const [universalParts] = await Promise.all([
+    getUniversalPartsForAgent(),
+    auditUniversalPartsForNotifications(),
+  ]);
+  const result = await askOpenAiForSpecialistResult(intake, {
+    approved: universalParts.approved,
+    pending: universalParts.pending,
+  });
   log.info("Agent intake call succeeded");
 
   if (!intake.saveBuild) {

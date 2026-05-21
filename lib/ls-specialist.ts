@@ -29,6 +29,17 @@ export type SpecialistResult = {
   summary: string;
   estimateMin: number;
   estimateMax: number;
+  universalParts?: Array<{
+    group: string;
+    name: string;
+    description: string | null;
+    status: string;
+  }>;
+};
+
+export type UniversalPartAgentContext = {
+  approved: NonNullable<SpecialistResult["universalParts"]>;
+  pending: NonNullable<SpecialistResult["universalParts"]>;
 };
 
 const goalLabels: Record<string, string> = {
@@ -38,7 +49,10 @@ const goalLabels: Record<string, string> = {
   SHOW: "show build",
 };
 
-export function getFallbackSpecialistResult(intake: BuildIntake): SpecialistResult {
+export function getFallbackSpecialistResult(
+  intake: BuildIntake,
+  universalParts?: UniversalPartAgentContext,
+): SpecialistResult {
   const vehicle = [
     intake.vehicleYear,
     intake.vehicleMake,
@@ -83,6 +97,8 @@ export function getFallbackSpecialistResult(intake: BuildIntake): SpecialistResu
     };
   }
 
+  const approvedPartNames = universalParts?.approved.map((part) => part.name) ?? [];
+
   return {
     nextQuestion: "Review the build ticket and save it when it looks right.",
     explanation: wantsLt
@@ -92,11 +108,15 @@ export function getFallbackSpecialistResult(intake: BuildIntake): SpecialistResu
       `${vehicle || "Vehicle"} planned as a ${goal} swap.`,
       `Engine/trans status: ${intake.engineStatus}.`,
       `Preferences: ${intake.preferences.length ? intake.preferences.join(", ") : "standard LS-focused setup"}.`,
+      approvedPartNames.length
+        ? `Approved universal planning parts: ${approvedPartNames.join(", ")}.`
+        : "Approved universal planning parts: none loaded yet.",
       intake.notes ? `Notes: ${intake.notes}.` : "Notes: confirm drivetrain, wiring, mounts, cooling, exhaust, and fuel system before scheduling.",
       `Estimated working range: $${estimateMin.toLocaleString()}-$${estimateMax.toLocaleString()}.`,
     ].join("\n"),
     estimateMin,
     estimateMax,
+    universalParts: universalParts?.approved,
   };
 }
 
@@ -194,12 +214,13 @@ export async function askOpenAiForSpecialistReply(
 
 export async function askOpenAiForSpecialistResult(
   intake: BuildIntake,
+  universalParts?: UniversalPartAgentContext,
 ): Promise<SpecialistResult> {
   if (!process.env.OPENAI_API_KEY) {
-    return getFallbackSpecialistResult(intake);
+    return getFallbackSpecialistResult(intake, universalParts);
   }
 
-  const fallback = getFallbackSpecialistResult(intake);
+  const fallback = getFallbackSpecialistResult(intake, universalParts);
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -215,12 +236,14 @@ export async function askOpenAiForSpecialistResult(
           {
             role: "system",
             content:
-              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with nextQuestion, explanation, summary, estimateMin, estimateMax. Be practical, concise, and shop-ready. Estimates are whole USD numbers.",
+              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with nextQuestion, explanation, summary, estimateMin, estimateMax. Be practical, concise, and shop-ready. Estimates are whole USD numbers. Never invent parts. Only mention universal parts from approvedUniversalParts. Treat pendingUniversalParts as Pending Admin Approval and do not recommend them to customers.",
           },
           {
             role: "user",
             content: JSON.stringify({
               intake,
+              approvedUniversalParts: universalParts?.approved ?? [],
+              pendingUniversalParts: universalParts?.pending ?? [],
               requiredShape: {
                 nextQuestion: "string",
                 explanation: "string",
@@ -255,6 +278,7 @@ export async function askOpenAiForSpecialistResult(
       summary: parsed.summary || fallback.summary,
       estimateMin: Number(parsed.estimateMin) || fallback.estimateMin,
       estimateMax: Number(parsed.estimateMax) || fallback.estimateMax,
+      universalParts: universalParts?.approved,
     };
   } catch {
     return fallback;

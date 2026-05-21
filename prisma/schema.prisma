@@ -64,6 +64,45 @@ model Build {
   @@index([createdAt])
 }
 
+model UniversalPartGroup {
+  id        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name      String          @unique
+  createdAt DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  parts     UniversalPart[]
+
+  @@index([createdAt])
+  @@map("universal_part_groups")
+}
+
+model UniversalPart {
+  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  groupId     String             @map("group_id") @db.Uuid
+  name        String
+  description String?
+  approved    Boolean            @default(false)
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  group       UniversalPartGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@unique([groupId, name])
+  @@index([groupId])
+  @@index([createdAt])
+  @@index([approved])
+  @@map("universal_parts")
+}
+
+model AdminNotification {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  type      String
+  message   String
+  metadata  Json?
+  resolved  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([resolved])
+  @@index([createdAt])
+  @@map("admin_notifications")
+}
+
 model AgentLog {
   id        String       @id @default(cuid())
   userId    String?
@@ -96,11 +135,11 @@ model CustomerLog {
   senderRole  String   @map("sender_role")
   senderEmail String   @map("sender_email")
   message     String
-  timestamp   DateTime @default(now()) @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("timestamp") @db.Timestamptz(6)
   reviewed    Boolean  @default(false)
   build       Build    @relation(fields: [buildId], references: [id], onDelete: Cascade)
 
   @@index([buildId])
-  @@index([timestamp])
+  @@index([createdAt])
   @@map("customer_logs")
 }
