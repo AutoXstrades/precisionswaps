@@ -9,6 +9,8 @@ const adminRoutes = [
   "/admin/users",
   "/admin/agents",
   "/admin/logs",
+  "/admin/parts",
+  "/admin/notifications",
 ];
 
 export default auth((request) => {
