@@ -13,8 +13,8 @@ type BuildPhotoUploadPanelProps = {
   buildId: string;
 };
 
-const maxPhotoDimension = 1600;
-const photoQuality = 0.82;
+const maxPhotoDimension = 1200;
+const photoQuality = 0.72;
 
 async function compressPhoto(file: File) {
   if (!file.type.startsWith("image/")) {
@@ -150,7 +150,7 @@ export function BuildPhotoUploadPanel({ buildId }: BuildPhotoUploadPanelProps) {
         body: uploadFormData,
       });
       const data = (await response.json().catch(() => null)) as
-        | { uploaded?: Record<string, string>; error?: string }
+        | { uploaded?: Record<string, { filename: string; uploadedAt: string }>; error?: string }
         | null;
 
       if (!response.ok || !data?.uploaded) {
@@ -162,7 +162,7 @@ export function BuildPhotoUploadPanel({ buildId }: BuildPhotoUploadPanelProps) {
       setSelectedFiles({});
       setMessage(`${Object.keys(data.uploaded).length} photo upload${Object.keys(data.uploaded).length === 1 ? "" : "s"} saved.`);
     } catch {
-      setError("Photo upload failed. Please try a smaller image or another file.");
+      setError("Photo upload failed. Please try one photo at a time or choose a smaller image.");
     } finally {
       setIsUploading(false);
     }

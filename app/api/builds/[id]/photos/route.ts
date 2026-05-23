@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import {
   buildPhotoFields,
   getBuildPhotoExtension,
@@ -8,7 +9,7 @@ import {
   type BuildPhotoMetadata,
   type NonMainBuildPhotoField,
 } from "@/lib/build-photos";
-import { requireCustomer } from "@/lib/customer";
+import { log } from "@/lib/log";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = {
@@ -33,7 +34,7 @@ async function fileToStoredPhoto(field: BuildPhotoField, file: File) {
 
   if (file.size > maxBuildPhotoBytes) {
     return {
-      error: `${field} must be 2 MB or smaller.`,
+      error: `${field} must be 2 MB or smaller after compression.`,
       photo: null,
     };
   }
@@ -52,7 +53,16 @@ async function fileToStoredPhoto(field: BuildPhotoField, file: File) {
 }
 
 export async function POST(request: Request, context: RouteContext) {
-  const session = await requireCustomer();
+  const session = await auth();
+
+  if (!session?.user) {
+    return NextResponse.json({ error: "Please log in again before uploading photos." }, { status: 401 });
+  }
+
+  if (session.user.role !== "CUSTOMER") {
+    return NextResponse.json({ error: "Customer access required." }, { status: 403 });
+  }
+
   const { id: buildId } = await context.params;
   const build = await prisma.build.findFirst({
     where: { id: buildId, userId: session.user.id },
@@ -72,44 +82,59 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const formData = await request.formData();
-  const metadata: BuildPhotoMetadata = { type: "build_photo_metadata" };
-  const uploaded: Partial<Record<BuildPhotoField, string>> = {};
+  try {
+    const formData = await request.formData();
+    const metadata: BuildPhotoMetadata = { type: "build_photo_metadata" };
+    const uploaded: Partial<Record<BuildPhotoField, { filename: string; uploadedAt: string }>> = {};
 
-  for (const field of buildPhotoFields) {
-    const file = formData.get(field);
+    for (const field of buildPhotoFields) {
+      const file = formData.get(field);
 
-    if (!(file instanceof File) || file.size === 0) {
-      continue;
+      if (!(file instanceof File) || file.size === 0) {
+        continue;
+      }
+
+      const { error, photo } = await fileToStoredPhoto(field, file);
+
+      if (error || !photo) {
+        return NextResponse.json({ error }, { status: 400 });
+      }
+
+      if (field === "mainVehiclePhoto") {
+        metadata.mainVehiclePhoto = photo;
+      } else {
+        metadata[field as NonMainBuildPhotoField] = photo;
+      }
+
+      uploaded[field] = {
+        filename: photo.filename,
+        uploadedAt: photo.uploadedAt,
+      };
     }
 
-    const { error, photo } = await fileToStoredPhoto(field, file);
-
-    if (error || !photo) {
-      return NextResponse.json({ error }, { status: 400 });
+    if (!Object.keys(uploaded).length) {
+      return NextResponse.json({ error: "No valid photo files were uploaded." }, { status: 400 });
     }
 
-    if (field === "mainVehiclePhoto") {
-      metadata.mainVehiclePhoto = photo;
-    } else {
-      metadata[field as NonMainBuildPhotoField] = photo;
-    }
+    await prisma.agentLog.create({
+      data: {
+        userId: session.user.id,
+        buildId,
+        role: "system",
+        content: JSON.stringify(metadata),
+      },
+    });
 
-    uploaded[field] = photo.dataUrl;
-  }
-
-  if (!Object.keys(uploaded).length) {
-    return NextResponse.json({ error: "No valid photo files were uploaded." }, { status: 400 });
-  }
-
-  await prisma.agentLog.create({
-    data: {
-      userId: session.user.id,
+    return NextResponse.json({ uploaded });
+  } catch (error) {
+    log.warn("Build photo upload failed", {
       buildId,
-      role: "system",
-      content: JSON.stringify(metadata),
-    },
-  });
+      error: error instanceof Error ? error.message : "unknown_error",
+    });
 
-  return NextResponse.json({ uploaded });
+    return NextResponse.json(
+      { error: "Photo upload failed on the server. Please try again with one photo at a time." },
+      { status: 500 },
+    );
+  }
 }
