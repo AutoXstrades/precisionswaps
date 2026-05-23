@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { MySwapPartsListButton } from "@/components/parts/PlatformPartsCatalog";
 import { requireCustomer } from "@/lib/customer";
 import { prisma } from "@/lib/prisma";
 
@@ -70,6 +71,7 @@ export default async function BuildPage({ params }: BuildPageProps) {
           >
             Edit Build
           </Link>
+          <MySwapPartsListButton />
           <Link
             href="/dashboard"
             className="rounded-full border border-white/15 px-5 py-3 text-center text-sm font-black uppercase tracking-[0.16em] text-white/70 hover:border-[#FF003C]/70 hover:text-white"
