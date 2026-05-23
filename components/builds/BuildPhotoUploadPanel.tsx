@@ -13,6 +13,49 @@ type BuildPhotoUploadPanelProps = {
   buildId: string;
 };
 
+const maxPhotoDimension = 1600;
+const photoQuality = 0.82;
+
+async function compressPhoto(file: File) {
+  if (!file.type.startsWith("image/")) {
+    return file;
+  }
+
+  const imageUrl = URL.createObjectURL(file);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new Image();
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Image could not be loaded."));
+      nextImage.src = imageUrl;
+    });
+    const scale = Math.min(1, maxPhotoDimension / Math.max(image.width, image.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(image.width * scale));
+    canvas.height = Math.max(1, Math.round(image.height * scale));
+    const context = canvas.getContext("2d");
+
+    if (!context) {
+      return file;
+    }
+
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) => {
+      canvas.toBlob(resolve, "image/jpeg", photoQuality);
+    });
+
+    if (!blob) {
+      return file;
+    }
+
+    const basename = file.name.replace(/\.[^.]+$/, "") || "build-photo";
+    return new File([blob], `${basename}.jpg`, { type: "image/jpeg" });
+  } finally {
+    URL.revokeObjectURL(imageUrl);
+  }
+}
+
 const photoFields: PhotoField[] = [
   {
     name: "mainVehiclePhoto",
@@ -76,9 +119,9 @@ export function BuildPhotoUploadPanel({ buildId }: BuildPhotoUploadPanelProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    const sourceFormData = new FormData(event.currentTarget);
     const hasFile = photoFields.some((field) => {
-      const value = formData.get(field.name);
+      const value = sourceFormData.get(field.name);
       return value instanceof File && value.size > 0;
     });
 
@@ -91,24 +134,38 @@ export function BuildPhotoUploadPanel({ buildId }: BuildPhotoUploadPanelProps) {
     setError(null);
     setMessage(null);
 
-    const response = await fetch(`/api/builds/${buildId}/photos`, {
-      method: "POST",
-      body: formData,
-    });
-    const data = (await response.json().catch(() => null)) as
-      | { uploaded?: Record<string, string>; error?: string }
-      | null;
+    try {
+      const uploadFormData = new FormData();
 
-    setIsUploading(false);
+      for (const field of photoFields) {
+        const value = sourceFormData.get(field.name);
 
-    if (!response.ok || !data?.uploaded) {
-      setError(data?.error ?? "Photo upload failed. Please try again.");
-      return;
+        if (value instanceof File && value.size > 0) {
+          uploadFormData.append(field.name, await compressPhoto(value));
+        }
+      }
+
+      const response = await fetch(`/api/builds/${buildId}/photos`, {
+        method: "POST",
+        body: uploadFormData,
+      });
+      const data = (await response.json().catch(() => null)) as
+        | { uploaded?: Record<string, string>; error?: string }
+        | null;
+
+      if (!response.ok || !data?.uploaded) {
+        setError(data?.error ?? "Photo upload failed. Please try again.");
+        return;
+      }
+
+      event.currentTarget.reset();
+      setSelectedFiles({});
+      setMessage(`${Object.keys(data.uploaded).length} photo upload${Object.keys(data.uploaded).length === 1 ? "" : "s"} saved.`);
+    } catch {
+      setError("Photo upload failed. Please try a smaller image or another file.");
+    } finally {
+      setIsUploading(false);
     }
-
-    event.currentTarget.reset();
-    setSelectedFiles({});
-    setMessage(`${Object.keys(data.uploaded).length} photo upload${Object.keys(data.uploaded).length === 1 ? "" : "s"} saved.`);
   }
 
   return (

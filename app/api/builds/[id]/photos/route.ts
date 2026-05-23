@@ -1,30 +1,15 @@
 import { randomUUID } from "crypto";
-import { mkdir, readFile, writeFile } from "fs/promises";
-import path from "path";
 import { NextResponse } from "next/server";
+import {
+  buildPhotoFields,
+  getBuildPhotoExtension,
+  maxBuildPhotoBytes,
+  type BuildPhotoField,
+  type BuildPhotoMetadata,
+  type NonMainBuildPhotoField,
+} from "@/lib/build-photos";
 import { requireCustomer } from "@/lib/customer";
 import { prisma } from "@/lib/prisma";
-
-const nonMainPhotoFields = [
-  "engineBayPhoto",
-  "engineFrontPhoto",
-  "engineLeftPhoto",
-  "engineRightPhoto",
-  "engineTopInjectorsPhoto",
-  "transmissionPhoto",
-  "ecmTagPhoto",
-] as const;
-const allowedPhotoFields = ["mainVehiclePhoto", ...nonMainPhotoFields] as const;
-const allowedMimeTypes = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-]);
-
-type AllowedPhotoField = (typeof allowedPhotoFields)[number];
-type PhotoMetadata = {
-  mainVehiclePhoto?: string;
-} & Partial<Record<(typeof nonMainPhotoFields)[number], { filename: string; uploadedAt: string }>>;
 
 type RouteContext = {
   params: Promise<{ id: string }>;
@@ -32,37 +17,41 @@ type RouteContext = {
 
 export const runtime = "nodejs";
 
-function getBuildUploadDir(buildId: string) {
-  return path.join(process.cwd(), "public", "uploads", "builds", buildId);
-}
-
-function getPublicPhotoPath(buildId: string, filename: string) {
-  return `/uploads/builds/${buildId}/${filename}`;
-}
-
-async function readMetadata(metadataPath: string): Promise<PhotoMetadata> {
-  try {
-    return JSON.parse(await readFile(metadataPath, "utf8")) as PhotoMetadata;
-  } catch {
-    return {};
-  }
-}
-
-function isAllowedPhotoField(value: string): value is AllowedPhotoField {
-  return allowedPhotoFields.includes(value as AllowedPhotoField);
-}
-
-function createPhotoFilename(field: AllowedPhotoField, file: File) {
-  const extension = allowedMimeTypes.get(file.type);
-
-  if (!extension) {
-    return null;
-  }
-
+function createPhotoFilename(field: BuildPhotoField, extension: string) {
   return `${field}-${Date.now()}-${randomUUID()}.${extension}`;
 }
 
-export async function POST(_request: Request, context: RouteContext) {
+async function fileToStoredPhoto(field: BuildPhotoField, file: File) {
+  const extension = getBuildPhotoExtension(file.type);
+
+  if (!extension) {
+    return {
+      error: `${field} must be a JPEG, PNG, or WebP image.`,
+      photo: null,
+    };
+  }
+
+  if (file.size > maxBuildPhotoBytes) {
+    return {
+      error: `${field} must be 2 MB or smaller.`,
+      photo: null,
+    };
+  }
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const filename = createPhotoFilename(field, extension);
+
+  return {
+    error: null,
+    photo: {
+      filename,
+      uploadedAt: new Date().toISOString(),
+      dataUrl: `data:${file.type};base64,${bytes.toString("base64")}`,
+    },
+  };
+}
+
+export async function POST(request: Request, context: RouteContext) {
   const session = await requireCustomer();
   const { id: buildId } = await context.params;
   const build = await prisma.build.findFirst({
@@ -74,7 +63,6 @@ export async function POST(_request: Request, context: RouteContext) {
     return NextResponse.json({ error: "Build not found." }, { status: 404 });
   }
 
-  const request = _request;
   const contentType = request.headers.get("content-type") ?? "";
 
   if (!contentType.includes("multipart/form-data")) {
@@ -85,49 +73,43 @@ export async function POST(_request: Request, context: RouteContext) {
   }
 
   const formData = await request.formData();
-  const uploadDir = getBuildUploadDir(buildId);
-  const metadataPath = path.join(uploadDir, "photo-metadata.json");
-  const metadata = await readMetadata(metadataPath);
-  const uploaded: Partial<Record<AllowedPhotoField, string>> = {};
+  const metadata: BuildPhotoMetadata = { type: "build_photo_metadata" };
+  const uploaded: Partial<Record<BuildPhotoField, string>> = {};
 
-  await mkdir(uploadDir, { recursive: true });
-
-  for (const field of allowedPhotoFields) {
+  for (const field of buildPhotoFields) {
     const file = formData.get(field);
 
     if (!(file instanceof File) || file.size === 0) {
       continue;
     }
 
-    const filename = createPhotoFilename(field, file);
+    const { error, photo } = await fileToStoredPhoto(field, file);
 
-    if (!filename) {
-      return NextResponse.json(
-        { error: `${field} must be a JPEG, PNG, or WebP image.` },
-        { status: 400 },
-      );
+    if (error || !photo) {
+      return NextResponse.json({ error }, { status: 400 });
     }
-
-    const bytes = Buffer.from(await file.arrayBuffer());
-    await writeFile(path.join(uploadDir, filename), bytes);
 
     if (field === "mainVehiclePhoto") {
-      metadata.mainVehiclePhoto = filename;
+      metadata.mainVehiclePhoto = photo;
     } else {
-      metadata[field] = {
-        filename,
-        uploadedAt: new Date().toISOString(),
-      };
+      metadata[field as NonMainBuildPhotoField] = photo;
     }
 
-    uploaded[field] = getPublicPhotoPath(buildId, filename);
+    uploaded[field] = photo.dataUrl;
   }
 
   if (!Object.keys(uploaded).length) {
     return NextResponse.json({ error: "No valid photo files were uploaded." }, { status: 400 });
   }
 
-  await writeFile(metadataPath, `${JSON.stringify(metadata, null, 2)}\n`, "utf8");
+  await prisma.agentLog.create({
+    data: {
+      userId: session.user.id,
+      buildId,
+      role: "system",
+      content: JSON.stringify(metadata),
+    },
+  });
 
-  return NextResponse.json({ uploaded, metadataPath: getPublicPhotoPath(buildId, "photo-metadata.json") });
+  return NextResponse.json({ uploaded });
 }

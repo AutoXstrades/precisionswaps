@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { getLatestMainVehiclePhoto } from "@/lib/build-photos";
 import { requireCustomer } from "@/lib/customer";
 import { prisma } from "@/lib/prisma";
 
@@ -33,6 +34,21 @@ export default async function DashboardPage() {
       estimateMin: true,
       estimateMax: true,
       updatedAt: true,
+      agentLogs: {
+        where: {
+          content: {
+            contains: "build_photo_metadata",
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        take: 8,
+        select: {
+          content: true,
+          createdAt: true,
+        },
+      },
     },
   });
 
@@ -59,32 +75,50 @@ export default async function DashboardPage() {
 
       {builds.length > 0 ? (
         <div className="mt-8 grid gap-4">
-          {builds.map((build) => (
-            <Link
-              key={build.id}
-              href={`/builds/${build.id}`}
-              className="neon-panel rounded-[8px] p-5 transition hover:border-[#FF003C]/70"
-            >
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="break-words text-xl font-black text-white">
-                    {build.vehicleYear} {build.vehicleMake} {build.vehicleModel}
-                  </p>
-                  <p className="mt-2 text-sm font-semibold uppercase tracking-[0.18em] text-white/50">
-                    {build.goal.toLowerCase()} build
-                  </p>
+          {builds.map((build) => {
+            const mainPhoto = getLatestMainVehiclePhoto(build.agentLogs);
+
+            return (
+              <Link
+                key={build.id}
+                href={`/builds/${build.id}`}
+                className="neon-panel group relative overflow-hidden rounded-[8px] p-5 transition hover:border-[#FF003C]/70"
+              >
+                <div className="flex min-h-36 flex-col gap-4 pr-0 sm:flex-row sm:items-start sm:justify-between sm:pr-40">
+                  <div>
+                    <p className="break-words text-xl font-black text-white">
+                      {build.vehicleYear} {build.vehicleMake} {build.vehicleModel}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold uppercase tracking-[0.18em] text-white/50">
+                      {build.goal.toLowerCase()} build
+                    </p>
+                  </div>
+                  <div className="text-left sm:text-right">
+                    <p className="text-lg font-black text-[#FF003C]">
+                      {formatEstimate(build.estimateMin, build.estimateMax)}
+                    </p>
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/42">
+                      Updated {build.updatedAt.toLocaleDateString()}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-left sm:text-right">
-                  <p className="text-lg font-black text-[#FF003C]">
-                    {formatEstimate(build.estimateMin, build.estimateMax)}
-                  </p>
-                  <p className="mt-2 text-xs font-semibold uppercase tracking-[0.16em] text-white/42">
-                    Updated {build.updatedAt.toLocaleDateString()}
-                  </p>
+
+                <div className="mt-4 h-28 overflow-hidden rounded-[8px] border border-white/10 bg-black/45 sm:absolute sm:bottom-5 sm:right-5 sm:mt-0 sm:h-28 sm:w-36">
+                  {mainPhoto ? (
+                    <img
+                      src={mainPhoto.dataUrl}
+                      alt={`${build.vehicleYear} ${build.vehicleMake} ${build.vehicleModel}`}
+                      className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center px-3 text-center text-xs font-black uppercase tracking-[0.12em] text-white/28">
+                      Main photo
+                    </div>
+                  )}
                 </div>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
       ) : (
         <div className="neon-panel mt-8 rounded-[8px] p-8">
