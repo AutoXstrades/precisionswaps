@@ -19,9 +19,16 @@ export const specialistChatSchema = z.object({
     .trim()
     .min(1, "Message is required.")
     .max(1000, "Message is too long."),
+  buildId: z.string().trim().min(1).optional(),
 });
 
 export type SpecialistChatInput = z.infer<typeof specialistChatSchema>;
+
+export type SpecialistConversationContext = Array<{
+  senderRole: string;
+  message: string;
+  createdAt: Date;
+}>;
 
 export type SpecialistResult = {
   nextQuestion: string;
@@ -29,17 +36,6 @@ export type SpecialistResult = {
   summary: string;
   estimateMin: number;
   estimateMax: number;
-  universalParts?: Array<{
-    group: string;
-    name: string;
-    description: string | null;
-    status: string;
-  }>;
-};
-
-export type UniversalPartAgentContext = {
-  approved: NonNullable<SpecialistResult["universalParts"]>;
-  pending: NonNullable<SpecialistResult["universalParts"]>;
 };
 
 const goalLabels: Record<string, string> = {
@@ -49,10 +45,46 @@ const goalLabels: Record<string, string> = {
   SHOW: "show build",
 };
 
-export function getFallbackSpecialistResult(
-  intake: BuildIntake,
-  universalParts?: UniversalPartAgentContext,
-): SpecialistResult {
+function dedupeLines(value: string) {
+  const seen = new Set<string>();
+
+  return value
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .filter((line) => {
+      const normalized = line
+        .replace(/^[-*•]\s*/, "")
+        .replace(/^\d+[.)]\s*/, "")
+        .trim()
+        .toLowerCase();
+
+      if (!normalized) {
+        return true;
+      }
+
+      if (seen.has(normalized)) {
+        return false;
+      }
+
+      seen.add(normalized);
+      return true;
+    })
+    .join("\n")
+    .trim();
+}
+
+function recentMessagesContain(
+  context: SpecialistConversationContext | undefined,
+  needles: string[],
+) {
+  const recentText = (context ?? [])
+    .map((item) => item.message.toLowerCase())
+    .join("\n");
+
+  return needles.some((needle) => recentText.includes(needle));
+}
+
+export function getFallbackSpecialistResult(intake: BuildIntake): SpecialistResult {
   const vehicle = [
     intake.vehicleYear,
     intake.vehicleMake,
@@ -97,36 +129,36 @@ export function getFallbackSpecialistResult(
     };
   }
 
-  const approvedPartNames = universalParts?.approved.map((part) => part.name) ?? [];
-
   return {
     nextQuestion: "Review the build ticket and save it when it looks right.",
     explanation: wantsLt
       ? "LT swaps can make strong modern power, but they usually need more wiring, fuel, and controller planning than a straightforward LS path."
       : "LS swaps remain the practical baseline because parts support, wiring options, and fitment knowledge are strong.",
-    summary: [
+    summary: dedupeLines([
       `${vehicle || "Vehicle"} planned as a ${goal} swap.`,
       `Engine/trans status: ${intake.engineStatus}.`,
       `Preferences: ${intake.preferences.length ? intake.preferences.join(", ") : "standard LS-focused setup"}.`,
-      approvedPartNames.length
-        ? `Approved universal planning parts: ${approvedPartNames.join(", ")}.`
-        : "Approved universal planning parts: none loaded yet.",
       intake.notes ? `Notes: ${intake.notes}.` : "Notes: confirm drivetrain, wiring, mounts, cooling, exhaust, and fuel system before scheduling.",
       `Estimated working range: $${estimateMin.toLocaleString()}-$${estimateMax.toLocaleString()}.`,
-    ].join("\n"),
+    ].join("\n")),
     estimateMin,
     estimateMax,
-    universalParts: universalParts?.approved,
   };
 }
 
-export function getFallbackSpecialistReply(input: SpecialistChatInput) {
+export function getFallbackSpecialistReply(
+  input: SpecialistChatInput,
+  context?: SpecialistConversationContext,
+) {
   const message = input.message.toLowerCase();
+  const alreadyCoveredCosts = recentMessagesContain(context, ["$7,500", "$7500", "estimate", "cost", "price"]);
+  const alreadyCoveredLt = recentMessagesContain(context, ["lt swaps", "lt swap", "controller", "fuel system"]);
 
   if (message.includes("lt")) {
     return {
-      reply:
-        "LT swaps can make excellent power, but they usually add controller, fuel system, wiring, and parts-cost complexity compared with a straightforward LS swap. For most daily and street builds, I would price both paths before choosing.",
+      reply: alreadyCoveredLt
+        ? "We already covered the LT tradeoff. Short version: choose LT when the budget supports extra controller, fuel, and wiring complexity; choose LS when speed, parts support, and predictability matter most."
+        : "LT swaps can make excellent power, but they usually add controller, fuel system, wiring, and parts-cost complexity compared with a straightforward LS swap. For most daily and street builds, price both paths before choosing.",
     };
   }
 
@@ -136,32 +168,34 @@ export function getFallbackSpecialistReply(input: SpecialistChatInput) {
     message.includes("estimate")
   ) {
     return {
-      reply:
-        "A typical PrecisionSwaps complete build target is $7,500-$10,000 for straightforward LS work, with cammed, LT, forced-induction, sourcing, wiring repair, and cleanup work pushing the range higher.",
+      reply: alreadyCoveredCosts
+        ? "Estimate reminder: straightforward LS builds usually target $7,500-$10,000, then move higher with cam, LT, boost, sourcing, wiring repair, or cleanup work."
+        : "A typical PrecisionSwaps complete build target is $7,500-$10,000 for straightforward LS work, with cammed, LT, forced-induction, sourcing, wiring repair, and cleanup work pushing the range higher.",
     };
   }
 
   if (message.includes("daily") || message.includes("reliable")) {
     return {
       reply:
-        "For a reliable daily, I would keep the combo simple: proven LS platform, conservative cam if any, clean cooling, solid fuel delivery, sorted wiring, and enough converter/transmission planning to avoid drivability problems.",
+        "For a reliable daily, keep the combo simple: proven LS platform, conservative cam if any, clean cooling, solid fuel delivery, sorted wiring, and enough converter/transmission planning to avoid drivability problems.",
     };
   }
 
   return {
     reply:
-      "I can help plan LS and LT swap paths, parts sourcing, wiring, goals, estimates, and build-ticket details. Tell me the vehicle, what drivetrain you have, and whether the goal is daily, street, drag, or show.",
+      "I can help plan LS and LT swap paths, parts sourcing, wiring, goals, estimates, and build-ticket details. Send the vehicle, drivetrain status, and whether the goal is daily, street, drag, or show.",
   };
 }
 
 export async function askOpenAiForSpecialistReply(
   input: SpecialistChatInput,
+  context: SpecialistConversationContext = [],
 ): Promise<{ reply: string }> {
   if (!process.env.OPENAI_API_KEY) {
-    return getFallbackSpecialistReply(input);
+    return getFallbackSpecialistReply(input, context);
   }
 
-  const fallback = getFallbackSpecialistReply(input);
+  const fallback = getFallbackSpecialistReply(input, context);
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -177,12 +211,16 @@ export async function askOpenAiForSpecialistReply(
           {
             role: "system",
             content:
-              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with one key: reply. Keep replies concise, practical, shop-ready, and focused on LS/LT swaps, wiring, estimates, build planning, and customer intake.",
+              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with one key: reply. Keep replies concise, practical, and shop-ready. Use bullets for lists. Avoid repeating the same part, explanation, or recommendation already present in recentConversation. Never invent parts or claim a part list exists unless the official MySwap Parts List is available in the build ticket.",
           },
           {
             role: "user",
             content: JSON.stringify({
               message: input.message,
+              recentConversation: context.map((item) => ({
+                senderRole: item.senderRole,
+                message: item.message,
+              })),
               requiredShape: { reply: "string" },
             }),
           },
@@ -206,7 +244,7 @@ export async function askOpenAiForSpecialistReply(
     const parsed = JSON.parse(content) as Partial<{ reply: string }>;
     const reply = parsed.reply?.trim();
 
-    return reply ? { reply } : fallback;
+    return reply ? { reply: dedupeLines(reply) } : fallback;
   } catch {
     return fallback;
   }
@@ -214,13 +252,12 @@ export async function askOpenAiForSpecialistReply(
 
 export async function askOpenAiForSpecialistResult(
   intake: BuildIntake,
-  universalParts?: UniversalPartAgentContext,
 ): Promise<SpecialistResult> {
   if (!process.env.OPENAI_API_KEY) {
-    return getFallbackSpecialistResult(intake, universalParts);
+    return getFallbackSpecialistResult(intake);
   }
 
-  const fallback = getFallbackSpecialistResult(intake, universalParts);
+  const fallback = getFallbackSpecialistResult(intake);
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -236,14 +273,12 @@ export async function askOpenAiForSpecialistResult(
           {
             role: "system",
             content:
-              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with nextQuestion, explanation, summary, estimateMin, estimateMax. Be practical, concise, and shop-ready. Estimates are whole USD numbers. Never invent parts. Only mention universal parts from approvedUniversalParts. Treat pendingUniversalParts as Pending Admin Approval and do not recommend them to customers.",
+              "You are the PrecisionSwaps.co LS Swap Specialist. Return strict JSON with nextQuestion, explanation, summary, estimateMin, estimateMax. Be practical, concise, and shop-ready. Estimates are whole USD numbers. Do not repeat the same part or explanation. Never invent parts. Direct customers to the official MySwap Parts List for platform-specific parts PDFs.",
           },
           {
             role: "user",
             content: JSON.stringify({
               intake,
-              approvedUniversalParts: universalParts?.approved ?? [],
-              pendingUniversalParts: universalParts?.pending ?? [],
               requiredShape: {
                 nextQuestion: "string",
                 explanation: "string",
@@ -274,11 +309,10 @@ export async function askOpenAiForSpecialistResult(
 
     return {
       nextQuestion: parsed.nextQuestion || fallback.nextQuestion,
-      explanation: parsed.explanation || fallback.explanation,
-      summary: parsed.summary || fallback.summary,
+      explanation: dedupeLines(parsed.explanation || fallback.explanation),
+      summary: dedupeLines(parsed.summary || fallback.summary),
       estimateMin: Number(parsed.estimateMin) || fallback.estimateMin,
       estimateMax: Number(parsed.estimateMax) || fallback.estimateMax,
-      universalParts: universalParts?.approved,
     };
   } catch {
     return fallback;

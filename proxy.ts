@@ -9,8 +9,8 @@ const adminRoutes = [
   "/admin/users",
   "/admin/agents",
   "/admin/logs",
-  "/admin/parts",
   "/admin/notifications",
+  "/api/system",
 ];
 
 export default auth((request) => {
@@ -48,5 +48,5 @@ export default auth((request) => {
 });
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/builds/:path*", "/admin/:path*"],
+  matcher: ["/dashboard/:path*", "/builds/:path*", "/admin/:path*", "/api/system/:path*"],
 };

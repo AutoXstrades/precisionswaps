@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { SiteNav } from "@/components/layout/SiteNav";
+import { triggerDailyPhotoCleanup } from "@/lib/photo-cleanup-trigger";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,11 +15,13 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  await triggerDailyPhotoCleanup();
+
   return (
     <html lang="en">
       <body>

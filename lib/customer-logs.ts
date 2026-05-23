@@ -54,6 +54,38 @@ export async function listCustomerLogsForCustomer(buildId: string, userId: strin
   return listCustomerLogsForAdmin(buildId);
 }
 
+export async function listRecentCustomerLogContext(
+  buildId: string,
+  userId: string,
+  take = 5,
+) {
+  const build = await prisma.build.findFirst({
+    where: { id: buildId, userId },
+    select: { id: true },
+  });
+
+  if (!build) {
+    return [];
+  }
+
+  const logs = await prisma.customerLog.findMany({
+    where: { buildId },
+    orderBy: { createdAt: "desc" },
+    take,
+    select: {
+      senderRole: true,
+      message: true,
+      createdAt: true,
+    },
+  });
+
+  return logs.reverse().map((log) => ({
+    senderRole: log.senderRole,
+    message: log.message,
+    createdAt: log.createdAt,
+  }));
+}
+
 export async function createCustomerLog({
   buildId,
   senderRole,

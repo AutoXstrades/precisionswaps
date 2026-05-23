@@ -2,7 +2,6 @@ import Link from "next/link";
 import { formatAdminDate, requireAdmin } from "@/lib/admin";
 import { countUnresolvedAdminNotifications } from "@/lib/admin-notifications";
 import { prisma } from "@/lib/prisma";
-import { countPendingUniversalParts } from "@/lib/universal-parts";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
@@ -12,35 +11,32 @@ export default async function AdminDashboardPage() {
     totalBuilds,
     totalLogs,
     unresolvedNotifications,
-    universalPartsPending,
     recentBuilds,
     recentLogs,
-  ] =
-    await Promise.all([
-      prisma.user.count(),
-      prisma.build.count(),
-      prisma.agentLog.count(),
-      countUnresolvedAdminNotifications(),
-      countPendingUniversalParts(),
-      prisma.build.findMany({
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { email: true },
-          },
+  ] = await Promise.all([
+    prisma.user.count(),
+    prisma.build.count(),
+    prisma.agentLog.count(),
+    countUnresolvedAdminNotifications(),
+    prisma.build.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: { email: true },
         },
-      }),
-      prisma.agentLog.findMany({
-        take: 5,
-        orderBy: { createdAt: "desc" },
-        include: {
-          user: {
-            select: { email: true },
-          },
+      },
+    }),
+    prisma.agentLog.findMany({
+      take: 5,
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: { email: true },
         },
-      }),
-    ]);
+      },
+    }),
+  ]);
 
   return (
     <section className="space-y-6">
@@ -51,13 +47,12 @@ export default async function AdminDashboardPage() {
         <h1 className="mt-3 text-4xl font-black text-white">Back office</h1>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-4">
         {[
           ["Users", totalUsers],
           ["Builds", totalBuilds],
           ["AI logs", totalLogs],
           ["Open alerts", unresolvedNotifications],
-          ["Pending parts", universalPartsPending],
         ].map(([label, value]) => (
           <div key={label} className="neon-panel rounded-[8px] p-5">
             <p className="text-sm font-black uppercase tracking-[0.18em] text-white/45">
@@ -68,19 +63,7 @@ export default async function AdminDashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Link
-          href="/admin/parts"
-          className="neon-panel rounded-[8px] p-5 transition hover:border-[#FF003C]/60"
-        >
-          <p className="text-sm font-black uppercase tracking-[0.18em] text-[#FF003C]">
-            Universal parts
-          </p>
-          <p className="mt-3 text-sm leading-6 text-white/62">
-            Review universal part groups, approval badges, and pending items
-            before any customer-facing workflow uses them.
-          </p>
-        </Link>
+      <div className="grid gap-4 md:grid-cols-1">
         <Link
           href="/admin/notifications"
           className="neon-panel rounded-[8px] p-5 transition hover:border-[#FF003C]/60"
@@ -89,8 +72,7 @@ export default async function AdminDashboardPage() {
             Notifications
           </p>
           <p className="mt-3 text-sm leading-6 text-white/62">
-            Resolve part approval alerts, empty group warnings, and future
-            push-to-customer workflow issues.
+            Review and resolve operational alerts from build, agent, and parts-list workflows.
           </p>
         </Link>
       </div>

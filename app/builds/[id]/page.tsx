@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { BuildPhotoUploadPanel } from "@/components/builds/BuildPhotoUploadPanel";
+import { CustomerBuildChatPanel } from "@/components/builds/CustomerBuildChatPanel";
 import { MySwapPartsListButton } from "@/components/parts/PlatformPartsCatalog";
+import { listCustomerLogsForCustomer } from "@/lib/customer-logs";
 import { requireCustomer } from "@/lib/customer";
 import { prisma } from "@/lib/prisma";
 
@@ -50,6 +53,8 @@ export default async function BuildPage({ params }: BuildPageProps) {
     notFound();
   }
 
+  const customerLogs = await listCustomerLogsForCustomer(id, session.user.id);
+
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -82,25 +87,30 @@ export default async function BuildPage({ params }: BuildPageProps) {
       </div>
 
       <div className="grid gap-5 lg:grid-cols-[0.7fr_1fr]">
-        <div className="neon-panel rounded-[8px] p-5">
-          <p className="text-sm font-black uppercase tracking-[0.22em] text-white/48">
-            Snapshot
-          </p>
-          <dl className="mt-5 space-y-4">
-            {[
-              ["Engine/trans status", build.engineStatus],
-              ["Goal", build.goal.toLowerCase()],
-              ["Estimate", formatEstimate(build.estimateMin, build.estimateMax)],
-              ["Created", build.createdAt.toLocaleDateString()],
-            ].map(([label, value]) => (
-              <div key={label}>
-                <dt className="text-xs font-black uppercase tracking-[0.16em] text-white/38">
-                  {label}
-                </dt>
-                <dd className="mt-1 text-lg font-bold text-white">{value}</dd>
-              </div>
-            ))}
-          </dl>
+        <div className="space-y-5">
+          <div className="neon-panel rounded-[8px] p-5">
+            <p className="text-sm font-black uppercase tracking-[0.22em] text-white/48">
+              Snapshot
+            </p>
+            <dl className="mt-5 space-y-4">
+              {[
+                ["Engine/trans status", build.engineStatus],
+                ["Goal", build.goal.toLowerCase()],
+                ["Estimate", formatEstimate(build.estimateMin, build.estimateMax)],
+                ["Created", build.createdAt.toLocaleDateString()],
+              ].map(([label, value]) => (
+                <div key={label}>
+                  <dt className="text-xs font-black uppercase tracking-[0.16em] text-white/38">
+                    {label}
+                  </dt>
+                  <dd className="mt-1 text-lg font-bold text-white">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+
+          <BuildPhotoUploadPanel buildId={id} />
+          <CustomerBuildChatPanel buildId={id} initialLogs={customerLogs ?? []} />
         </div>
 
         <div className="neon-panel rounded-[8px] p-5">

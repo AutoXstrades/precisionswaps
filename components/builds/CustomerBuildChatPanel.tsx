@@ -13,7 +13,7 @@ type CustomerLog = {
   reviewed: boolean;
 };
 
-type AdminCustomerLogPanelProps = {
+type CustomerBuildChatPanelProps = {
   buildId: string;
   initialLogs: CustomerLog[];
 };
@@ -27,10 +27,10 @@ function formatTimestamp(value: string | Date) {
   }).format(new Date(value));
 }
 
-export function AdminCustomerLogPanel({
+export function CustomerBuildChatPanel({
   buildId,
   initialLogs,
-}: AdminCustomerLogPanelProps) {
+}: CustomerBuildChatPanelProps) {
   const [logs, setLogs] = useState(initialLogs);
   const [message, setMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export function AdminCustomerLogPanel({
     }
 
     const channel = supabase
-      .channel(`customer-logs-${buildId}`)
+      .channel(`customer-build-logs-${buildId}`)
       .on(
         "postgres_changes",
         {
@@ -61,7 +61,7 @@ export function AdminCustomerLogPanel({
           filter: `build_id=eq.${buildId}`,
         },
         async () => {
-          const response = await fetch(`/api/admin/builds/${buildId}/customer-logs`);
+          const response = await fetch(`/api/customer-logs/${buildId}`);
           const data = (await response.json().catch(() => null)) as
             | { logs?: CustomerLog[] }
             | null;
@@ -79,7 +79,7 @@ export function AdminCustomerLogPanel({
   }, [buildId, supabase]);
 
   async function refreshLogs() {
-    const response = await fetch(`/api/admin/builds/${buildId}/customer-logs`);
+    const response = await fetch(`/api/customer-logs/${buildId}`);
     const data = (await response.json().catch(() => null)) as
       | { logs?: CustomerLog[] }
       | null;
@@ -101,7 +101,7 @@ export function AdminCustomerLogPanel({
     setError(null);
     setIsSending(true);
 
-    const response = await fetch(`/api/admin/builds/${buildId}/customer-logs`, {
+    const response = await fetch(`/api/customer-logs/${buildId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ message: trimmedMessage }),
@@ -126,38 +126,14 @@ export function AdminCustomerLogPanel({
     setLogs((current) => [...current.filter((log) => log.id !== nextLog.id), nextLog]);
   }
 
-  async function toggleReviewed(log: CustomerLog) {
-    const nextReviewed = !log.reviewed;
-    setLogs((current) =>
-      current.map((item) =>
-        item.id === log.id ? { ...item, reviewed: nextReviewed } : item,
-      ),
-    );
-
-    const response = await fetch(`/api/admin/builds/${buildId}/customer-logs`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: log.id, reviewed: nextReviewed }),
-    });
-
-    if (!response.ok) {
-      setLogs((current) =>
-        current.map((item) =>
-          item.id === log.id ? { ...item, reviewed: log.reviewed } : item,
-        ),
-      );
-      setError("Could not update reviewed status.");
-    }
-  }
-
   return (
     <div className="neon-panel rounded-[8px] p-4 sm:p-5">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-xs font-black uppercase tracking-[0.16em] text-[#FF003C] sm:tracking-[0.22em]">
-            Customer/Admin chat
+            Shop conversation
           </p>
-          <h2 className="mt-2 text-xl font-black text-white">Build conversation</h2>
+          <h2 className="mt-2 text-xl font-black text-white">Build messages</h2>
         </div>
         <button
           type="button"
@@ -177,14 +153,14 @@ export function AdminCustomerLogPanel({
             <article
               key={log.id}
               className={`rounded-[8px] border p-3 ${
-                log.senderRole === "admin"
+                log.senderRole === "customer"
                   ? "ml-auto border-[#FF003C]/30 bg-[#FF003C]/10"
                   : "border-white/10 bg-white/[0.06]"
               }`}
             >
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-xs font-black uppercase tracking-[0.12em] text-white/52">
-                  {log.senderRole} | {log.senderEmail}
+                  {log.senderRole === "admin" ? "Shop" : "You"} | {log.senderEmail}
                 </p>
                 <p className="text-xs font-semibold text-white/38">
                   {formatTimestamp(log.timestamp)}
@@ -193,20 +169,11 @@ export function AdminCustomerLogPanel({
               <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-white/76">
                 {log.message}
               </p>
-              <label className="mt-3 flex min-h-11 items-center gap-2 text-xs font-bold uppercase tracking-[0.1em] text-white/58">
-                <input
-                  type="checkbox"
-                  checked={log.reviewed}
-                  onChange={() => toggleReviewed(log)}
-                  className="h-4 w-4 accent-[#FF003C]"
-                />
-                Reviewed
-              </label>
             </article>
           ))
         ) : (
           <p className="p-4 text-sm text-white/52">
-            No build messages have been logged for this build yet.
+            No messages yet. Send a note to the shop about this build.
           </p>
         )}
       </div>
@@ -221,7 +188,7 @@ export function AdminCustomerLogPanel({
             setError(null);
           }}
           className="min-h-28 w-full rounded-[8px] border border-white/10 bg-black/55 px-4 py-3 text-white outline-none transition focus:border-[#FF003C]"
-          placeholder="Add a note or customer-facing update..."
+          placeholder="Ask a question or send an update about this build..."
         />
         <button
           type="submit"

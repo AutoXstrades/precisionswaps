@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { withApiHandler, validationError } from "@/lib/api-handler";
+import { listRecentCustomerLogContext } from "@/lib/customer-logs";
 import {
   askOpenAiForSpecialistReply,
   askOpenAiForSpecialistResult,
@@ -10,10 +11,6 @@ import {
 import { log } from "@/lib/log";
 import { prisma } from "@/lib/prisma";
 import { checkRateLimit, rateLimitConfigs } from "@/lib/rate-limit";
-import {
-  auditUniversalPartsForNotifications,
-  getUniversalPartsForAgent,
-} from "@/lib/universal-parts";
 
 export const runtime = "nodejs";
 
@@ -44,17 +41,22 @@ export const POST = withApiHandler(async (request: Request) => {
       return validationError(parsedChat.error);
     }
 
-    const result = await askOpenAiForSpecialistReply(parsedChat.data);
+    const context = parsedChat.data.buildId
+      ? await listRecentCustomerLogContext(parsedChat.data.buildId, session.user.id, 5)
+      : [];
+    const result = await askOpenAiForSpecialistReply(parsedChat.data, context);
 
     await prisma.agentLog.createMany({
       data: [
         {
           userId: session.user.id,
+          buildId: parsedChat.data.buildId,
           role: "user",
           content: JSON.stringify({ type: "specialist_chat" }),
         },
         {
           userId: session.user.id,
+          buildId: parsedChat.data.buildId,
           role: "assistant",
           content: JSON.stringify({ type: "specialist_chat_reply" }),
         },
@@ -74,14 +76,7 @@ export const POST = withApiHandler(async (request: Request) => {
   }
 
   const intake = parsedBody.data;
-  const [universalParts] = await Promise.all([
-    getUniversalPartsForAgent(),
-    auditUniversalPartsForNotifications(),
-  ]);
-  const result = await askOpenAiForSpecialistResult(intake, {
-    approved: universalParts.approved,
-    pending: universalParts.pending,
-  });
+  const result = await askOpenAiForSpecialistResult(intake);
   log.info("Agent intake call succeeded");
 
   if (!intake.saveBuild) {
