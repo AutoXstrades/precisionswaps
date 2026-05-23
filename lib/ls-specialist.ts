@@ -53,7 +53,7 @@ function dedupeLines(value: string) {
     .map((line) => line.trimEnd())
     .filter((line) => {
       const normalized = line
-        .replace(/^[-*•]\s*/, "")
+        .replace(/^[-*]\s*/, "")
         .replace(/^\d+[.)]\s*/, "")
         .trim()
         .toLowerCase();
