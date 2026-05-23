@@ -10,6 +10,7 @@ type Platform = {
   imageSrc: string;
   imageAlt: string;
   pdfSrc: string;
+  downloadSrc: string;
 };
 
 const platforms: Platform[] = [
@@ -20,6 +21,7 @@ const platforms: Platform[] = [
     imageSrc: "/images/96-98-gm-truck.jpeg",
     imageAlt: "Black 96-98 GM truck platform",
     pdfSrc: "/documents/psc-96-98-gm-truck-parts-list.pdf",
+    downloadSrc: "/api/parts/download/96-98-gm-truck-suv",
   },
 ];
 
@@ -122,8 +124,9 @@ function PartsListModal({
           </p>
           {activePlatform ? (
             <a
-              href={activePlatform.pdfSrc}
-              download
+              href={activePlatform.downloadSrc}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex min-h-11 items-center justify-center rounded-full bg-[#FF003C] px-5 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-white shadow-[0_0_28px_rgba(255,0,60,0.42)] transition hover:bg-[#ff2a59]"
             >
               Download Parts List (PDF)
